@@ -1,0 +1,25 @@
+{
+  "id": "memo-008-numbered-steps",
+  "note": "番号付きで書かれた手順。番号が剥がれ、句点が付くか",
+  "input": {
+    "memo": "麻婆豆腐。1. ひき肉を炒める 2. 豆腐を加える 3. 味付けして煮る。15分、2人分"
+  },
+  "expect": {
+    "timeMinutes": 15,
+    "servings": 2,
+    "protein": [
+      "ひき肉"
+    ],
+    "plant": [
+      "豆腐・厚揚げ"
+    ],
+    "genre": [
+      "中華風"
+    ],
+    "ingredientsMin": 3,
+    "stepsMin": 3,
+    "stepsNoLeadingNumber": true,
+    "stepsEndWithKuten": true,
+    "sourceUrlNull": true
+  }
+}

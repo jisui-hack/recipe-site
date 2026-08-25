@@ -1,0 +1,20 @@
+{
+  "id": "memo-006-no-url-hallucination",
+  "note": "URL が無いのに出さないこと。ここはゼロ許容",
+  "input": {
+    "memo": "クックパッドで見た感じの生姜焼き。豚ロースと玉ねぎ。15分、2人分"
+  },
+  "expect": {
+    "timeMinutes": 15,
+    "servings": 2,
+    "protein": [
+      "豚肉"
+    ],
+    "plant": [
+      "玉ねぎ"
+    ],
+    "ingredientsMin": 3,
+    "stepsMin": 2,
+    "sourceUrlNull": true
+  }
+}

@@ -1,3 +1,8 @@
 .DS_Store
 node_modules/
 *.log
+
+# node_modules は iCloud ツリー外への symlink（bff/README.md 参照）
+node_modules.nosync/
+bff/wrangler.toml.bak
+.claude/

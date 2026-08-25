@@ -1,0 +1,16 @@
+{
+  "id": "memo-004-out-of-vocab",
+  "note": "語彙にない食材。近い語彙に寄せず空配列にできるか",
+  "input": {
+    "memo": "ラム肉とアボカドのサラダ。クミンをふる。5分、1人分"
+  },
+  "expect": {
+    "timeMinutes": 5,
+    "servings": 1,
+    "protein": [],
+    "plant": [],
+    "ingredientsMin": 2,
+    "stepsMin": 1,
+    "sourceUrlNull": true
+  }
+}

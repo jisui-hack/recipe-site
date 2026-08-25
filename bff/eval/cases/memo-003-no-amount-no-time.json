@@ -1,0 +1,24 @@
+{
+  "id": "memo-003-no-amount-no-time",
+  "note": "分量も時間も書かれていない。捏造せず followUps に回せるか",
+  "input": {
+    "memo": "鶏むね肉ときのこを炒めて、塩とバターで味付け。"
+  },
+  "expect": {
+    "protein": [
+      "鶏肉"
+    ],
+    "plant": [
+      "きのこ"
+    ],
+    "ingredientsMin": 3,
+    "stepsMin": 2,
+    "sourceUrlNull": true,
+    "confidenceAtMost": {
+      "ingredientAmounts": "medium"
+    },
+    "followUpFields": [
+      "ingredientAmounts"
+    ]
+  }
+}

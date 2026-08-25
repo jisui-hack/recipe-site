@@ -1,0 +1,40 @@
+name = "recipe-ai-bff"
+main = "src/index.js"
+compatibility_date = "2026-08-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+# 許可する接続元。カンマ区切り・完全一致。ワイルドカードは使わない
+ALLOWED_ORIGINS = "https://jisui-hack.github.io,http://localhost:3000,http://localhost:8788"
+
+MODEL = "claude-sonnet-5"
+MAX_TOKENS = "2048"
+
+# 抽出タスクなので既定は thinking なし + effort low（体感速度を優先）。
+# 品質が足りなければ THINKING=adaptive / EFFORT=medium に上げる。
+THINKING = "disabled"
+EFFORT = "low"
+
+HOURLY_REQUEST_LIMIT = "20"
+DAILY_REQUEST_LIMIT = "100"
+
+# イラスト化（Gemini）。1枚 約¥5 とテキストより高いので別枠で数える。
+# 合言葉が漏れたときの被害がそのまま請求額になるため、上限は必ず入れる。
+HOURLY_IMAGE_LIMIT = "10"
+DAILY_IMAGE_LIMIT = "30"
+
+# Gemini のモデルIDは改版が早い。404 が出たらここを差し替える
+GEMINI_MODEL_LITE = "gemini-3.1-flash-lite-image"
+GEMINI_MODEL_FLASH = "gemini-3.1-flash-image"
+
+# キャッシュとレート制限のカウンタ。
+#   wrangler kv namespace create RECIPE_AI_BFF
+# で作って id を差し替える
+[[kv_namespaces]]
+binding = "KV"
+id = "23b81504de694bfaa886a7d40bb0ae8c"
+
+# Secrets（wrangler secret put で登録する。ここには書かない）
+#   wrangler secret put ANTHROPIC_API_KEY
+#   wrangler secret put CLIENT_SHARED_KEY
+#   wrangler secret put GEMINI_API_KEY      # イラスト化を使う場合のみ

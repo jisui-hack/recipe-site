@@ -148,6 +148,16 @@ URL を直接開いて使います。`<meta name="robots" content="noindex, nofo
 画像はコミット前にブラウザ内で縮小されます（長辺1024px / JPEG品質0.8 / 目標150KB以下）。
 画像なしでも投稿でき、その場合は一覧に 🍳 のプレースホルダが出ます。
 
+#### AIで下書き（任意）
+
+メモ書きや料理写真から、フォームの全項目を埋めた下書きを作れます。
+使うには [`bff/`](bff/README.md) を Cloudflare Workers にデプロイして、
+`add.html` の「AI下書きの設定」に URL とキーを入れてください。
+
+- **AI は下書きを作るだけで、投稿はしません。** これまで通り人が確認して「投稿する」を押します。
+- 未設定でも、BFF が落ちていても、**フォームは今まで通り手入力で使えます。**
+- 設計の詳細は [`docs/ai-draft-design.md`](docs/ai-draft-design.md)。
+
 ### B. 手でJSONを置く
 
 `public/data/recipes/<id>.json` を追加して push すれば OK。

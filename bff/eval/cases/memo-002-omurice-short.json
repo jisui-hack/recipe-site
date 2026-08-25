@@ -1,0 +1,19 @@
+{
+  "id": "memo-002-omurice-short",
+  "note": "極端に短いメモ。推定に頼らざるをえない",
+  "input": {
+    "memo": "オムライス"
+  },
+  "expect": {
+    "protein": [
+      "卵"
+    ],
+    "ingredientsMin": 3,
+    "stepsMin": 3,
+    "sourceUrlNull": true,
+    "confidenceAtMost": {
+      "servings": "low",
+      "ingredientAmounts": "medium"
+    }
+  }
+}

@@ -1,0 +1,3 @@
+# ローカル開発用。.dev.vars にコピーして値を入れる（.dev.vars は commit しない）
+ANTHROPIC_API_KEY=sk-ant-...
+CLIENT_SHARED_KEY=ここに32バイトのランダム文字列
