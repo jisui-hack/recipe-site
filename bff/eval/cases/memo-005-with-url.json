@@ -1,0 +1,23 @@
+{
+  "id": "memo-005-with-url",
+  "note": "メモに URL がある。そのまま sourceUrl に入るか",
+  "input": {
+    "memo": "https://note.com/example/n/abc123 を参考に。牛こまと玉ねぎで牛丼。10分、1人分"
+  },
+  "expect": {
+    "timeMinutes": 10,
+    "servings": 1,
+    "protein": [
+      "牛肉"
+    ],
+    "plant": [
+      "玉ねぎ"
+    ],
+    "genre": [
+      "和風"
+    ],
+    "ingredientsMin": 3,
+    "stepsMin": 2,
+    "sourceUrl": "https://note.com/example/n/abc123"
+  }
+}

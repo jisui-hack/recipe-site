@@ -50,6 +50,117 @@
     </div>
   </details>
 
+  <section class="ai-draft" id="ai-draft">
+    <h2 class="ai-draft-title">メモから下書きを作る</h2>
+
+    <p class="ai-unconfigured-note muted note">
+      下の「AI下書きの設定」にエンドポイントとクライアントキーを入れると使えます。
+    </p>
+
+    <div class="field">
+      <label for="ai-memo">レシピのメモ・アイデア</label>
+      <textarea id="ai-memo" rows="4"
+        placeholder="例）豚バラと白菜を重ねて蒸すだけ。ポン酢。10分、2人分。&#10;箇条書きでも、思いつくままでも大丈夫です。"></textarea>
+      <p class="muted note">
+        ここに入れた内容はレシピとして公開されません。下書きを作るためだけに使われ、
+        処理のため Anthropic の API に送信されます。
+      </p>
+    </div>
+
+    <div class="field">
+      <label for="ai-image">写真から読み取る（任意）</label>
+      <input id="ai-image" type="file" accept="image/*">
+      <p class="muted note" id="ai-image-info"></p>
+      <label class="checkbox">
+        <input type="checkbox" id="ai-image-as-thumb" checked>
+        この写真をサムネイルにも使う（手書きメモの写真ならオフに）
+      </label>
+    </div>
+
+    <section id="illustrate" class="illustrate" hidden>
+      <h3 class="illustrate-title">写真をイラストにする</h3>
+      <p class="muted note">
+        料理だけを描き直すので、部屋・手・同席者は写りません。1枚あたり約5円かかります。
+      </p>
+      <div class="row-actions">
+        <button type="button" id="il-run" class="btn btn-plain">イラストにする</button>
+        <label class="il-model">
+          <span class="visually-hidden">モデル</span>
+          <select id="il-model">
+            <option value="lite">標準（速い・安い）</option>
+            <option value="flash">きれいめ（崩れたとき用）</option>
+          </select>
+        </label>
+        <span id="il-status" class="muted" role="status" aria-live="polite"></span>
+      </div>
+      <div id="il-result" hidden>
+        <img id="il-preview" alt="生成されたイラストのプレビュー" class="il-preview">
+        <div class="row-actions">
+          <button type="button" id="il-adopt" class="btn">サムネイルに使う</button>
+          <button type="button" id="il-again" class="link-btn">もう一度</button>
+          <a id="il-download" class="link-btn" href="#" download>画像を保存</a>
+        </div>
+        <p class="muted note">
+          器と机以外に何か写っていないか、投稿前に一度確認してください。
+          X に上げるときは「画像を保存」してから投稿画面で添付します。
+        </p>
+      </div>
+    </section>
+
+    <div class="row-actions ai-actions">
+      <button type="button" id="ai-generate" class="btn">AIで下書き</button>
+      <button type="button" id="ai-regenerate" class="link-btn" hidden>作り直す</button>
+      <button type="button" id="ai-undo" class="link-btn" hidden>下書きを取り消す</button>
+      <span id="ai-status" class="muted" role="status" aria-live="polite"></span>
+    </div>
+
+    <div id="ai-warnings" class="ai-warnings" hidden></div>
+
+    <section id="x-post" class="x-post" hidden>
+      <h3 class="x-post-title">X に投稿する文</h3>
+      <label class="visually-hidden" for="x-post-text">X の投稿文</label>
+      <textarea id="x-post-text" rows="4"></textarea>
+      <p class="x-post-meta">
+        <span id="x-post-count" class="x-post-count"></span>
+        <span id="x-post-url" class="muted"></span>
+      </p>
+      <div class="row-actions">
+        <button type="button" id="x-post-copy" class="btn btn-plain">文をコピー</button>
+        <a id="x-post-open" class="btn" href="#" target="_blank" rel="noopener noreferrer">Xの投稿画面を開く</a>
+        <span id="x-post-status" class="muted" role="status" aria-live="polite"></span>
+      </div>
+      <p class="muted note">
+        写真は X 側で添付してください（投稿画面に画像を渡す方法が X 側にないため）。
+        自動投稿はしません。内容を確認してから自分で投稿してください。
+      </p>
+    </section>
+
+    <details id="ai-settings" class="settings">
+      <summary>AI下書きの設定（初回のみ）</summary>
+      <p class="muted note">
+        キーはこのブラウザの localStorage にだけ保存されます。
+        GitHub のトークンとは別のもので、漏れても書き込みはされません。
+      </p>
+      <div class="field">
+        <label for="ai-cfg-endpoint">BFF のエンドポイント URL</label>
+        <input id="ai-cfg-endpoint" type="url" autocomplete="off" inputmode="url">
+      </div>
+      <div class="field">
+        <label for="ai-cfg-key">クライアントキー</label>
+        <input id="ai-cfg-key" type="password" autocomplete="off">
+      </div>
+      <div class="row-actions">
+        <button type="button" id="ai-cfg-save" class="btn">保存</button>
+        <button type="button" id="ai-cfg-clear" class="link-btn">キーを削除</button>
+        <span id="ai-cfg-status" class="muted"></span>
+      </div>
+    </details>
+  </section>
+
+  <p id="ai-uncertain-note" class="visually-hidden">
+    AI が推定した値です。そのまま投稿せず確認してください。
+  </p>
+
   <form id="recipe-form" novalidate>
     <div class="field">
       <label for="f-title">タイトル <span class="req">必須</span></label>
@@ -125,5 +236,7 @@
 </main>
 
 <script type="module" src="assets/add.js"></script>
+<!-- AI下書き。この1行を消せば、フォームは元の手入力だけの状態に戻る -->
+<script type="module" src="assets/ai-draft.js"></script>
 </body>
 </html>

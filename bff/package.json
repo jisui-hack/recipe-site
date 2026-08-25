@@ -1,0 +1,26 @@
+{
+  "name": "recipe-ai-bff",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "description": "自炊の本棚の「AIで下書き」用 BFF（Cloudflare Workers）",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "eval": "node eval/run.mjs",
+    "setup": "./scripts/setup.sh",
+    "smoke": "./scripts/smoke.sh",
+    "pretest": "node scripts/check-node-modules.mjs",
+    "check:env": "node scripts/check-node-modules.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.70.0"
+  },
+  "devDependencies": {
+    "jsdom": "^30.0.1",
+    "vitest": "^3.0.0",
+    "wrangler": "^4.0.0"
+  }
+}

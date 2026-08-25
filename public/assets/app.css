@@ -10,6 +10,8 @@
   --accent-dark: #235741;
   --accent-weak: #e6ece4;
   --surface-warm: #efe7d3;  /* サムネ枠やタグの下地。地色より少し濃いクリーム */
+  --warn: #a9711b;          /* AI下書きの「要確認」。クリームの地で読める濃さ */
+  --warn-weak: #f7edd8;
 }
 
 * { box-sizing: border-box; }
@@ -359,3 +361,132 @@ ol.steps li { margin-bottom: 8px; }
   border-radius: 8px;
   padding: 12px;
 }
+
+/* ---------- AI下書き ---------- */
+
+.ai-draft {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 24px;
+  background: var(--surface-warm);
+}
+.ai-draft-title { margin: 0 0 12px; font-size: 17px; }
+.ai-draft .field:last-of-type { margin-bottom: 0; }
+.ai-actions { margin-bottom: 0; }
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.checkbox input { flex: 0 0 auto; }
+
+.ai-warnings {
+  margin-top: 12px;
+  border: 1px solid var(--warn);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--warn-weak);
+}
+.ai-warn-title { margin: 0 0 6px; font-weight: 700; font-size: 14px; }
+.ai-warn-list { margin: 0; padding-left: 1.2em; font-size: 14px; }
+.ai-warn-list li { margin-bottom: 4px; }
+.ai-jump { text-align: left; padding: 0; }
+.ai-rationale { margin-top: 10px; font-size: 13px; color: var(--muted); }
+.ai-rationale summary { cursor: pointer; }
+
+/*
+ * AI が埋めた欄の目印。
+ * 「確信度が高い/低い」を色だけで区別しない（実線 / 破線で分ける）。
+ * 読み上げ向けには ai-mapper.js が aria-describedby を付ける。
+ */
+/* .field input[type="text"] の方が詳細度が高いので、ID を足して確実に勝たせる */
+#recipe-form input[data-ai-filled="true"],
+#recipe-form textarea[data-ai-filled="true"] {
+  border-left: 3px solid var(--accent);
+  background: var(--accent-weak);
+}
+/* 確信度が低い欄。色（緑／琥珀）だけでなく実線／破線でも区別する */
+#recipe-form input[data-ai-uncertain="true"],
+#recipe-form textarea[data-ai-uncertain="true"] {
+  border-left: 3px dashed var(--warn);
+  background: var(--warn-weak);
+}
+
+/* ---------- X への投稿 ---------- */
+
+.x-post {
+  margin-top: 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--surface);
+}
+.x-post-title { margin: 0 0 8px; font-size: 15px; }
+.x-post textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--fg);
+  resize: vertical;
+}
+.x-post-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  align-items: baseline;
+  margin: 6px 0 0;
+  font-size: 13px;
+}
+.x-post-count { font-variant-numeric: tabular-nums; color: var(--muted); }
+/* 超過は色だけでなく太字でも示す */
+.x-post-count[data-over="true"] { color: #a33; font-weight: 700; }
+.x-post a.btn { text-decoration: none; display: inline-block; }
+.x-post a.btn[aria-disabled="true"] { opacity: .5; pointer-events: none; }
+
+/* ---------- 写真をイラストにする ---------- */
+
+.illustrate {
+  margin: 12px 0 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--surface);
+}
+.illustrate-title { margin: 0 0 6px; font-size: 15px; }
+.il-model select {
+  font: inherit;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--fg);
+}
+.il-preview {
+  display: block;
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin: 10px 0 0;
+  background: var(--surface-warm);
+}
+
+/* --- AI下書き: 鍵が未設定のあいだ ---------------------------------------
+   このページは公開されているので、押しても動かないボタンを訪問者に見せない。
+   見出しと設定だけ残し、設定を保存した時点で残りが出る。 */
+.ai-unconfigured-note { display: none; }
+
+#ai-draft.is-unconfigured > *:not(.ai-draft-title):not(.ai-unconfigured-note):not(#ai-settings) {
+  display: none;
+}
+#ai-draft.is-unconfigured .ai-unconfigured-note { display: block; }

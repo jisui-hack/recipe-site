@@ -1,0 +1,23 @@
+{
+  "id": "memo-010-servings-only",
+  "note": "人数だけ明記。時間は推定になる（medium 以下であること）",
+  "input": {
+    "memo": "きのこと厚揚げの煮物。4人分。だしと醤油で煮る。"
+  },
+  "expect": {
+    "servings": 4,
+    "plant": [
+      "きのこ",
+      "豆腐・厚揚げ"
+    ],
+    "genre": [
+      "和風"
+    ],
+    "ingredientsMin": 3,
+    "stepsMin": 2,
+    "confidenceAtMost": {
+      "timeMinutes": "medium"
+    },
+    "sourceUrlNull": true
+  }
+}

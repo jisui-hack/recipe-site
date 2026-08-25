@@ -537,6 +537,34 @@ async function runJob() {
   job = null;
 }
 
+/* ---------- AI下書き（ai-mapper.js）向けの公開API ---------- */
+/*
+ * 追加は export と setTags() だけで、上の既存関数には手を入れていない。
+ * ai-draft.js の読み込みを1行消せば元の挙動に完全に戻せる状態を保つため。
+ */
+
+export { collectForm, ingredientRow, shrinkImage, stepRow, todayISO };
+
+/**
+ * 外部からタグ選択状態を設定する。
+ * selectedTags（Map）と DOM の aria-pressed は別々に持っているので、
+ * 片方だけ更新すると「見た目は選択済みなのに投稿されない」状態になる。
+ */
+export function setTags(groupKey, names) {
+  const set = selectedTags.get(groupKey);
+  if (!set) return;
+  set.clear();
+  for (const name of names) set.add(name);
+  for (const btn of document.querySelectorAll(`.chip-tag[data-group="${groupKey}"]`)) {
+    btn.setAttribute("aria-pressed", set.has(btn.dataset.name) ? "true" : "false");
+  }
+}
+
+/** 現在のタグ選択を groupKey -> string[] で読み出す（Undo のスナップショット用） */
+export function getTags() {
+  return Object.fromEntries([...selectedTags].map(([key, set]) => [key, [...set]]));
+}
+
 /* ---------- 起動 ---------- */
 
 function initForm() {

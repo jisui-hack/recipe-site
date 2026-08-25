@@ -1,0 +1,27 @@
+{
+  "id": "memo-001-buta-hakusai",
+  "note": "正常系。時間・人数・素材がすべて書かれている",
+  "input": {
+    "memo": "豚バラと白菜を重ねて蒸すだけ。ポン酢。10分、2人分"
+  },
+  "expect": {
+    "timeMinutes": 10,
+    "servings": 2,
+    "protein": [
+      "豚肉"
+    ],
+    "plant": [
+      "白菜"
+    ],
+    "genre": [
+      "和風"
+    ],
+    "ingredientsMin": 3,
+    "stepsMin": 3,
+    "sourceUrlNull": true,
+    "confidenceAtLeast": {
+      "timeMinutes": "high",
+      "servings": "high"
+    }
+  }
+}
