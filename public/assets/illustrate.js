@@ -54,15 +54,80 @@ function base64ToBlob(base64, mediaType) {
 /** 元写真が選ばれたらイラスト化ボタンを出す */
 export function setSourcePhoto(blob) {
   sourceBlob = blob;
-  const box = $("illustrate");
-  if (!box) return;
-  box.hidden = !blob;
   if (!blob) {
     revoke();
     resultBlob = null;
     adopted = false;
-    $("il-result").hidden = true;
+    const r = $("il-result");
+    if (r) r.hidden = true;
   }
+  syncMode();
+}
+
+/**
+ * フォームに入っている材料。写真が無いときはこれを元に描く。
+ * collectForm() は空行を落とすが、ここは名前だけ拾えればよいので DOM を直接見る。
+ */
+function recipeFromForm() {
+  const title = ($("f-title")?.value ?? "").trim();
+  const names = [...document.querySelectorAll("#ing-rows .ing-name")]
+    .map((el) => el.value.trim())
+    .filter(Boolean);
+  return { title, ingredients: names };
+}
+
+/** 写真が無くても、料理名が入っていれば描ける */
+function canDrawFromRecipe() {
+  return recipeFromForm().title.length > 0;
+}
+
+/**
+ * 入口が2つあるので、いまどちらで動くのかを画面に出す。
+ * **黙って切り替わると、写真を選んだつもりで文章から描かれる事故が起きる。**
+ */
+function syncMode() {
+  const box = $("illustrate");
+  if (!box) return;
+
+  const fromPhoto = Boolean(sourceBlob);
+  box.hidden = !fromPhoto && !canDrawFromRecipe();
+
+  const title = $("il-title");
+  const note = $("il-note");
+  const run = $("il-run");
+  if (!title || !note || !run) return;
+
+  if (fromPhoto) {
+    title.textContent = "写真をイラストにする";
+    note.textContent =
+      "料理だけを描き直すので、部屋・手・同席者は写りません。1枚あたり約5円かかります。";
+    run.textContent = "イラストにする";
+  } else {
+    title.textContent = "レシピからイラストを作る";
+    note.textContent =
+      "写真が無いときに、料理名と材料から描き起こします。実際に作ったものの絵ではありません。1枚あたり約5円かかります。";
+    run.textContent = "レシピから作る";
+  }
+}
+
+/**
+ * 下書きを流し込んだあとに呼ぶ。
+ *
+ * **applyDraft は value を直接代入するので input イベントが飛ばない。**
+ * 打ち込みの監視だけに頼ると、AI が料理名を埋めてもこの欄が出てこない。
+ */
+export function refreshIllustrateMode() {
+  syncMode();
+}
+
+/** 料理名や材料を打ち替えたら、出せる／出せないを見直す */
+export function watchRecipeFields() {
+  const form = document.getElementById("recipe-form");
+  if (!form) return;
+  form.addEventListener("input", (e) => {
+    if (sourceBlob) return; // 写真があるときは関係ない
+    if (e.target.id === "f-title" || e.target.classList?.contains("ing-name")) syncMode();
+  });
 }
 
 function showResult(blob, meta) {
@@ -103,7 +168,11 @@ function adopt() {
 }
 
 async function run() {
-  if (!sourceBlob) return;
+  const fromPhoto = Boolean(sourceBlob);
+  if (!fromPhoto && !canDrawFromRecipe()) {
+    setStatus("料理名を入れてください。");
+    return;
+  }
   const endpoint = (localStorage.getItem("ai_bff_endpoint") || "").replace(/\/v1\/draft$/, "");
   const key = localStorage.getItem("ai_bff_key") || "";
   if (!endpoint || !key) {
@@ -124,7 +193,14 @@ async function run() {
       headers: { "Content-Type": "application/json", "X-Client-Key": key },
       body: JSON.stringify({
         schemaVersion: 1,
-        image: { mediaType: sourceBlob.type || "image/jpeg", base64: await blobToBase64(sourceBlob) },
+        ...(fromPhoto
+          ? {
+              image: {
+                mediaType: sourceBlob.type || "image/jpeg",
+                base64: await blobToBase64(sourceBlob),
+              },
+            }
+          : { recipe: recipeFromForm() }),
         model: $("il-model").value === "flash" ? "flash" : "lite",
       }),
       signal: controller.signal,
@@ -169,6 +245,8 @@ export function initIllustrate() {
   $("il-run").addEventListener("click", run);
   $("il-again").addEventListener("click", run);
   $("il-adopt").addEventListener("click", adopt);
+  watchRecipeFields();
+  syncMode(); // 下書き適用済みで開き直した場合に、写真なしでも出せるようにする
 }
 
 export function hasAdoptedIllustration() {

@@ -16,6 +16,24 @@ import { el } from "./common.js";
 const SITE_BASE = "https://jisui-hack.github.io/recipe-site";
 const X_LIMIT = 280; // 重み付き。日本語は1文字=2
 
+/**
+ * 投稿文にレシピの URL を付けるか。
+ *
+ * **いまは付けない（2026-08-26）。** サイトがまだ整っていないうちに
+ * 流入させたくないため。中身が揃ったら true に戻すだけでよい。
+ * 付けるときの配線（投稿完了を見て確定 URL を差し込む処理）は残してある。
+ */
+const INCLUDE_URL = false;
+
+/** URL を付ける設定のときだけ、確定したレシピの URL を返す */
+function recipeUrl() {
+  if (!INCLUDE_URL) return null;
+  const link = document.getElementById("result")?.querySelector('a[href^="recipe.html?id="]');
+  if (!link) return null;
+  const id = new URLSearchParams(link.getAttribute("href").split("?")[1]).get("id");
+  return id ? `${SITE_BASE}/recipe.html?id=${encodeURIComponent(id)}` : null;
+}
+
 let currentText = "";
 
 /**
@@ -66,7 +84,9 @@ function render(url) {
 
   document.getElementById("x-post-url").textContent = url
     ? `投稿にこの URL が付きます: ${url}`
-    : "レシピを投稿するとURLが決まります。先にXへ出す場合はURLなしになります。";
+    : INCLUDE_URL
+      ? "レシピを投稿するとURLが決まります。先にXへ出す場合はURLなしになります。"
+      : "URL は付けません（サイトが整うまで）。"; 
 }
 
 /** BFF が返した紹介文を表示する */
@@ -95,12 +115,10 @@ export function clearXPost() {
 function watchForPostedRecipe() {
   const result = document.getElementById("result");
   if (!result) return;
+  if (!INCLUDE_URL) return; // 付けない設定なら見張る意味がない
   new MutationObserver(() => {
     if (result.hidden || !currentText) return;
-    const link = result.querySelector('a[href^="recipe.html?id="]');
-    if (!link) return;
-    const id = new URLSearchParams(link.getAttribute("href").split("?")[1]).get("id");
-    if (id) render(`${SITE_BASE}/recipe.html?id=${encodeURIComponent(id)}`);
+    if (recipeUrl()) render(recipeUrl());
   }).observe(result, { childList: true, subtree: true, attributes: true });
 }
 
@@ -110,16 +128,12 @@ export function initXPost() {
 
   document.getElementById("x-post-text").addEventListener("input", (e) => {
     currentText = e.target.value;
-    const link = document.getElementById("result")?.querySelector('a[href^="recipe.html?id="]');
-    const id = link && new URLSearchParams(link.getAttribute("href").split("?")[1]).get("id");
-    render(id ? `${SITE_BASE}/recipe.html?id=${encodeURIComponent(id)}` : null);
+    render(recipeUrl());
   });
 
   document.getElementById("x-post-copy").addEventListener("click", async () => {
     const status = document.getElementById("x-post-status");
-    const link = document.getElementById("result")?.querySelector('a[href^="recipe.html?id="]');
-    const id = link && new URLSearchParams(link.getAttribute("href").split("?")[1]).get("id");
-    const text = composeText(currentText, id ? `${SITE_BASE}/recipe.html?id=${id}` : null);
+    const text = composeText(currentText, recipeUrl());
     try {
       await navigator.clipboard.writeText(text);
       status.textContent = "コピーしました";

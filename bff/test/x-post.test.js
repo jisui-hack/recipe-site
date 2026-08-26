@@ -74,9 +74,9 @@ describe("表示", () => {
     expect($("x-post").hidden).toBe(true);
   });
 
-  it("投稿前は URL が未定と伝える", () => {
+  it("URL は付けないと伝える", () => {
     x.showXPost(TEXT);
-    expect($("x-post-url").textContent).toContain("レシピを投稿するとURL");
+    expect($("x-post-url").textContent).toContain("URL は付けません");
     expect($("x-post-open").href).not.toContain("recipe.html");
   });
 
@@ -109,10 +109,11 @@ describe("表示", () => {
 });
 
 describe("レシピ投稿後に URL が入る", () => {
-  it("#result にリンクが出たら本文に URL が付く", async () => {
-    x.showXPost("本文 #自炊ハック");
+  it("#result にリンクが出ても本文に URL は入らない", async () => {
+    // サイトが整うまで URL は出さない方針（INCLUDE_URL = false）。
+    // 投稿が終わって詳細ページの URL が確定しても、本文には足さない。
+    x.showXPost("本文");
 
-    // add.js が投稿成功時にやることを模す（add.js には手を入れない方針）
     const result = $("result");
     result.hidden = false;
     const a = document.createElement("a");
@@ -120,15 +121,15 @@ describe("レシピ投稿後に URL が入る", () => {
     a.textContent = "このレシピを見る →";
     result.appendChild(a);
 
-    await new Promise((r) => setTimeout(r, 30)); // MutationObserver を待つ
+    await new Promise((r) => setTimeout(r, 30));
 
-    const url = "https://jisui-hack.github.io/recipe-site/recipe.html?id=2026-0005-abcd";
-    expect($("x-post-url").textContent).toContain(url);
-    expect(decodeURIComponent($("x-post-open").href.split("text=")[1])).toBe(`本文 #自炊ハック\n${url}`);
+    expect($("x-post-url").textContent).toContain("URL は付けません");
+    expect(decodeURIComponent($("x-post-open").href.split("text=")[1])).toBe("本文");
+    expect($("x-post-open").href).not.toContain("recipe.html");
   });
 
-  it("URL のぶん（23+改行）を文字数に足す", async () => {
-    x.showXPost("あ".repeat(120)); // 240
+  it("URL を足さないぶん、文字数は本文だけで数える", async () => {
+    x.showXPost("本文");
     const result = $("result");
     result.hidden = false;
     const a = document.createElement("a");
@@ -136,7 +137,6 @@ describe("レシピ投稿後に URL が入る", () => {
     result.appendChild(a);
     await new Promise((r) => setTimeout(r, 30));
 
-    expect($("x-post-count").textContent).toBe("264 / 280");
-    expect($("x-post-count").dataset.over).toBe("false");
+    expect($("x-post-count").textContent).toBe(`${x.weightedLength("本文")} / 280`);
   });
 });

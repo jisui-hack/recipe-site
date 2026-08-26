@@ -163,7 +163,7 @@ describe("AI下書き → コミットされる JSON", () => {
     const recipe = buildRecipeJson(addMod.collectForm(), "2026-0005-abcd", false);
 
     expect(recipe.protein).toHaveLength(9);
-    expect(recipe.plant).toHaveLength(18);
+    expect(recipe.plant).toHaveLength(19);
     expect(recipe.genre).toHaveLength(5);
     expect(reindexProblems(recipe, "2026-0005-abcd.json")).toEqual([]);
   });

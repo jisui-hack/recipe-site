@@ -197,17 +197,32 @@ describe("normalizeDraft", () => {
 
 describe("X の紹介文（xPost）", () => {
   it("そのまま通す", () => {
-    const out = normalizeDraft(rawDraft({ xPost: "豚バラ白菜を重ねて蒸すだけ。10分・2人分。#自炊ハック" }), ctx());
-    expect(out.xPost).toBe("豚バラ白菜を重ねて蒸すだけ。10分・2人分。#自炊ハック");
+    const body = "ごぼうは煮物と相性がいい。豚肉と水だけで煮て、醤油とみりんで味付け。15分ほどで作れる。";
+    const out = normalizeDraft(rawDraft({ xPost: body }), ctx());
+    expect(out.xPost).toBe(body);
   });
 
   it("モデルが URL を書いてきたら落とす（正しい URL は投稿時に付ける）", () => {
     const out = normalizeDraft(
-      rawDraft({ xPost: "10分でできる https://cookpad.com/recipe/123 #自炊ハック" }),
+      rawDraft({ xPost: "10分でできる https://cookpad.com/recipe/123" }),
       ctx()
     );
     expect(out.xPost).not.toContain("http");
-    expect(out.xPost).toContain("#自炊ハック");
+    expect(out.xPost).toContain("10分でできる");
+  });
+
+  it("ハッシュタグは落とす（プロンプトで禁じても書いてくるため）", () => {
+    const out = normalizeDraft(
+      rawDraft({ xPost: "ごぼうは煮物と相性がいい。15分ほどで作れる。#自炊ハック #作り置き" }),
+      ctx()
+    );
+    expect(out.xPost).not.toContain("#");
+    expect(out.xPost).toBe("ごぼうは煮物と相性がいい。15分ほどで作れる。");
+  });
+
+  it("全角のハッシュタグも落とす", () => {
+    const out = normalizeDraft(rawDraft({ xPost: "15分で作れる。＃自炊ハック" }), ctx());
+    expect(out.xPost).toBe("15分で作れる。");
   });
 
   it("長すぎたら切り詰める", () => {

@@ -16,7 +16,7 @@ import {
   snapshotForm,
 } from "./ai-mapper.js";
 import { el } from "./common.js";
-import { initIllustrate, setSourcePhoto } from "./illustrate.js";
+import { initIllustrate, refreshIllustrateMode, setSourcePhoto } from "./illustrate.js";
 import { clearXPost, initXPost, showXPost } from "./x-post.js";
 import { TAG_GROUPS } from "./tags.js";
 
@@ -467,6 +467,8 @@ async function onGenerate({ nocache = false } = {}) {
         imageNotices.push("この環境では写真をサムネイルに自動でコピーできません。下の欄で選んでください。");
       }
       renderResult(payload, applied, imageNotices);
+      // 料理名が埋まったので、写真が無くても「レシピからイラストを作る」を出せる
+      refreshIllustrateMode();
       showXPost(payload.xPost);
       undo.hidden = false;
       document.getElementById("ai-regenerate").hidden = false;
@@ -489,6 +491,7 @@ function onUndo() {
   restoreForm(lastSnapshot);
   revertThumbnail();
   clearXPost();
+  refreshIllustrateMode(); // 料理名が消えたらイラストの欄も引っ込める
   lastSnapshot = null;
   document.getElementById("ai-undo").hidden = true;
   showWarnings([]);
