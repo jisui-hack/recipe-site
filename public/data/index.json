@@ -30,6 +30,23 @@
     ]
   },
   {
+    "id": "2026-0006-yyec",
+    "title": "煮込まない豚ひき肉なすカレー",
+    "thumb": "data/images/2026-0006-yyec.jpg",
+    "timeMinutes": 15,
+    "createdAt": "2026-08-26",
+    "protein": [
+      "ひき肉"
+    ],
+    "plant": [
+      "玉ねぎ",
+      "なす"
+    ],
+    "genre": [
+      "和風"
+    ]
+  },
+  {
     "id": "2026-0003-oyakodon",
     "title": "フライパンひとつで親子丼",
     "thumb": null,
