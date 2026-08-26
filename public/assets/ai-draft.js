@@ -37,8 +37,20 @@ let inFlight = null;
 
 /* ---------- 設定 ---------- */
 
+/**
+ * 保存されているエンドポイント。**空のときに既定値へ落とさない。**
+ * 以前は DEFAULT_ENDPOINT（実在しない example ドメイン）へ落としていたが、
+ * 鍵だけ入れて URL を入れ忘れると DNS が引けず「AI に繋がりませんでした」に
+ * なり、設定漏れが通信障害に見えていた。DEFAULT_ENDPOINT は入力欄の
+ * placeholder 表示だけに使う。
+ */
 function endpoint() {
-  return localStorage.getItem(ENDPOINT_KEY) || DEFAULT_ENDPOINT;
+  return (localStorage.getItem(ENDPOINT_KEY) || "").trim();
+}
+
+/** エンドポイントと鍵が両方そろって初めて使える */
+function isConfigured() {
+  return Boolean(endpoint() && clientKey());
 }
 
 function clientKey() {
@@ -51,7 +63,7 @@ function clientKey() {
  */
 function syncConfiguredState() {
   const section = document.getElementById("ai-draft");
-  if (section) section.classList.toggle("is-unconfigured", !clientKey());
+  if (section) section.classList.toggle("is-unconfigured", !isConfigured());
 }
 
 function initAiSettings() {
@@ -63,8 +75,12 @@ function initAiSettings() {
   epInput.value = localStorage.getItem(ENDPOINT_KEY) || "";
   epInput.placeholder = DEFAULT_ENDPOINT;
   keyInput.value = clientKey();
-  if (!clientKey()) {
-    status.textContent = "未設定です";
+  if (!isConfigured()) {
+    status.textContent = !endpoint() && !clientKey()
+      ? "未設定です"
+      : !endpoint()
+        ? "エンドポイントが未入力です"
+        : "クライアントキーが未入力です";
     box.open = true; // 初回はここから始めてもらう
   }
   syncConfiguredState();
@@ -406,7 +422,7 @@ async function onGenerate({ nocache = false } = {}) {
     showWarnings([el("p", { class: "ai-warn-title", text: "メモを書くか、写真を選んでください。" })]);
     return;
   }
-  if (!clientKey()) {
+  if (!isConfigured()) {
     showError(new DraftError(401, "UNAUTHORIZED"));
     return;
   }

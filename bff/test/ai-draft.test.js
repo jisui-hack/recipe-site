@@ -315,7 +315,31 @@ describe("鍵が未設定のとき", () => {
     expect($("ai-cfg-status").textContent).toBe("未設定です");
   });
 
-  it("キーを保存すると畳みが解ける", () => {
+  it("エンドポイントだけでは畳みは解けない", () => {
+    $("ai-cfg-endpoint").value = "https://bff.test/v1/draft";
+    $("ai-cfg-save").click();
+    expect($("ai-draft").classList.contains("is-unconfigured")).toBe(true);
+  });
+
+  it("キーだけでは畳みは解けない（URL 未入力を通信障害に見せない）", async () => {
+    // 以前は既定の example ドメインへ落としていて、設定漏れが
+    // 「AI に繋がりませんでした」になっていた。
+    $("ai-cfg-key").value = KEY;
+    $("ai-cfg-save").click();
+    expect($("ai-draft").classList.contains("is-unconfigured")).toBe(true);
+    expect($("ai-cfg-status").textContent).toBe("保存しました");
+
+    // この状態で生成を押しても fetch は飛ばない
+    const spy = vi.fn();
+    globalThis.fetch = spy;
+    typeMemo();
+    $("ai-generate").click();
+    await new Promise((r) => setTimeout(r, 20));
+    expect(spy).not.toHaveBeenCalled();
+    expect(warnTexts().join("")).toContain("設定");
+  });
+
+  it("両方そろうと畳みが解ける", () => {
     $("ai-cfg-endpoint").value = "https://bff.test/v1/draft";
     $("ai-cfg-key").value = KEY;
     $("ai-cfg-save").click();
