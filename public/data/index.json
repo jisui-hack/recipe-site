@@ -47,6 +47,21 @@
     ]
   },
   {
+    "id": "2026-0007-dgoc",
+    "title": "えびと卵の中華風炒め",
+    "thumb": null,
+    "timeMinutes": 1,
+    "createdAt": "2026-08-26",
+    "protein": [
+      "えび・いか・貝",
+      "卵"
+    ],
+    "plant": [],
+    "genre": [
+      "中華風"
+    ]
+  },
+  {
     "id": "2026-0003-oyakodon",
     "title": "フライパンひとつで親子丼",
     "thumb": null,
