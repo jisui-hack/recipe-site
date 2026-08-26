@@ -93,6 +93,22 @@ export const TAG_GROUPS = [
         icon: svg(`<path d="M13.6 8.4c2.6 2.6 2.4 6.6-.6 8.8-2.4 1.8-5.6 1.4-7.2-.8-1.4-2-.6-4.8 1.6-6.4 2.2-1.6 4.6-2.6 6.2-1.6z" fill="#f4f6f2" stroke="#c4cdc0" stroke-width="1"/><path d="M14 8l4-4M15 9.4c1.6-.6 2.6-1.8 3-3.4M12.6 6.8c.6-1.8 1.8-3 3.4-3.4" stroke="#5f9146" stroke-width="1.8" stroke-linecap="round"/>`),
       },
       {
+        name: "ごぼう",
+        icon: svg(`<path d="M5.4 19.6c-.6-.6-.5-1.4.2-2.1L14.8 8c1.1-1.1 2.4-1.7 3.4-1.4 1 .3 1.3 1.3.9 2.4-.4 1-1.2 1.9-2.2 2.6L7.5 20c-.8.5-1.6.3-2.1-.4z" fill="#8a5a34"/><path d="M12.6 10.6l-3.1-1M15.2 8.2l-1-3M9.6 13.6l-3.2.6" stroke="#a9743f" stroke-width="1.3" stroke-linecap="round" fill="none"/><path d="M18.4 6.4c.5-1.3 1.4-2.2 2.6-2.6" stroke="#5f9146" stroke-width="1.8" stroke-linecap="round" fill="none"/>`),
+      },
+      {
+        name: "れんこん",
+        icon: svg(`<circle cx="12" cy="12.4" r="8" fill="#f2e9d4" stroke="#cbb98d" stroke-width="1"/><g fill="#d9c9a3"><circle cx="12" cy="8.2" r="1.5"/><circle cx="15.6" cy="10.3" r="1.5"/><circle cx="15.6" cy="14.5" r="1.5"/><circle cx="12" cy="16.6" r="1.5"/><circle cx="8.4" cy="14.5" r="1.5"/><circle cx="8.4" cy="10.3" r="1.5"/><circle cx="12" cy="12.4" r="1.6"/></g>`),
+      },
+      {
+        name: "かぼちゃ",
+        icon: svg(`<path d="M12 7.4c3.8 0 6.8 2.6 6.8 6s-3 6-6.8 6-6.8-2.6-6.8-6 3-6 6.8-6z" fill="#3f7a45"/><path d="M9.3 8.4c-.8 1.5-1.2 3.1-1.2 5s.4 3.5 1.2 5M14.7 8.4c.8 1.5 1.2 3.1 1.2 5s-.4 3.5-1.2 5" stroke="#2f5f34" stroke-width="1.1" fill="none"/><path d="M12 7.4V4.8" stroke="#8a7440" stroke-width="1.8" stroke-linecap="round"/>`),
+      },
+      {
+        name: "ズッキーニ",
+        icon: svg(`<path d="M17.4 6.2c1.2 1.2 1.2 3.1 0 4.3l-7 7c-1.2 1.2-3.1 1.2-4.3 0s-1.2-3.1 0-4.3l7-7c1.2-1.2 3.1-1.2 4.3 0z" fill="#4f8f3f"/><path d="M14.6 6.8l-8 8" stroke="#7bb765" stroke-width="1.2" stroke-linecap="round"/><path d="M17.8 5.8l1.8-1.8" stroke="#5f9146" stroke-width="1.8" stroke-linecap="round"/>`),
+      },
+      {
         name: "トマト",
         icon: svg(`<circle cx="12" cy="13.4" r="7" fill="#d94f3d"/><path d="M12 6.4l-2.6-2M12 6.4l2.6-2M12 6.4v2.4M8.6 7.6c1 1.2 2.2 1.8 3.4 1.8s2.4-.6 3.4-1.8" stroke="#5f9146" stroke-width="1.6" stroke-linecap="round" fill="none"/><path d="M9 11.4c.4-1.2 1.2-2 2.2-2.4" stroke="#f0a094" stroke-width="1.4" stroke-linecap="round"/>`),
       },

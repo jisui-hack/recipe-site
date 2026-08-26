@@ -8,7 +8,9 @@
     "protein": [
       "豚肉"
     ],
-    "plant": [],
+    "plant": [
+      "ごぼう"
+    ],
     "genre": [
       "和風"
     ]
@@ -50,7 +52,7 @@
     "id": "2026-0007-dgoc",
     "title": "えびと卵の中華風炒め",
     "thumb": null,
-    "timeMinutes": 1,
+    "timeMinutes": 10,
     "createdAt": "2026-08-26",
     "protein": [
       "えび・いか・貝",
