@@ -26,7 +26,12 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      # ref: main が要る。既定ではトリガーしたコミットを取りに行くため、
+      # 投稿フォームのように3コミットが連続すると、古い断面を公開してしまう。
       - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -36,17 +41,30 @@ jobs:
       - name: Rebuild index.json
         run: node scripts/reindex.mjs
 
+      # index.json のコミットに失敗しても公開は続ける。
+      # 投稿フォームは自分で index.json を更新するので、ここは保険でしかない。
+      # ここで job を落とすと、レシピが公開に反映されないほうの実害が出る。
       - name: Commit index.json if changed
+        continue-on-error: true
         run: |
-          if [ -n "$(git status --porcelain public/data/index.json)" ]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add public/data/index.json
-            git commit -m "chore: reindex index.json"
-            git push
-          else
+          if [ -z "$(git status --porcelain public/data/index.json)" ]; then
             echo "index.json は最新です"
+            exit 0
           fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/index.json
+          git commit -m "chore: reindex index.json"
+          for i in 1 2 3; do
+            if git push; then
+              echo "index.json を更新しました"
+              exit 0
+            fi
+            echo "push が競合しました。取り込み直して再試行します（${i}回目）"
+            git pull --rebase origin main || break
+          done
+          echo "::warning::index.json のコミットに失敗しました。公開はこのまま続行します"
+          exit 1
 
       # 再生成後の public/ をそのまま配信する（ビルドはしない）
       - uses: actions/configure-pages@v5
