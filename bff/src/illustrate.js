@@ -10,11 +10,12 @@
  */
 
 /** 設計書 §4 の固定プロンプト。1文字も変えずに送る */
-export const ILLUSTRATE_PROMPT = `この写真の料理を、以下の仕様でイラストに描き直してください。
-料理そのもの（具材の種類・個数・切り方・盛り付けの配置）は写真のとおりに保ち、
-絵柄と背景だけを差し替えてください。
-
-【画風】
+/**
+ * 画風の指定。写真から描き直す場合とレシピから描き起こす場合で共有する。
+ * **共有させているのは、2つの入口で絵柄が食い違うと本棚が揃わないため。**
+ * 設計書 §4 の文面をそのまま使う。変えるときは PROMPT_VERSION を上げる。
+ */
+const STYLE_SPEC = `【画風】
 アニメ調のデジタルペイント。セル塗りに近いが、food illustration として
 質感は描き込む。彩度はやや高め。タレやオイルの照り、ごま・七味の粒、
 野菜の断面の種まで丁寧に描く。写真的なボケは入れない。
@@ -37,6 +38,35 @@ export const ILLUSTRATE_PROMPT = `この写真の料理を、以下の仕様で�
 【描いてはいけないもの】
 人物、手、指、部屋、壁、窓、キッチン、家具、他の食器、
 ロゴ、パッケージ、文字、透かし、署名。`;
+
+/** 設計書 §4 の固定プロンプト（写真から描き直す）。1文字も変えずに送る */
+export const ILLUSTRATE_PROMPT = `この写真の料理を、以下の仕様でイラストに描き直してください。
+料理そのもの（具材の種類・個数・切り方・盛り付けの配置）は写真のとおりに保ち、
+絵柄と背景だけを差し替えてください。
+
+${STYLE_SPEC}`;
+
+/**
+ * 写真が無いときに、レシピの文面から描き起こす。
+ *
+ * 写真経路との違いは冒頭の一段落だけで、画風・器・背景・視点は同じものを送る。
+ * **「実際に作った1皿」ではなく「この料理の一般的な盛り付け」を描かせる。**
+ * 手元に無いものを写真のように装わせないため、盛り付けの創作は最小限に寄せる。
+ */
+export function buildRecipePrompt({ title, ingredients }) {
+  const list = (ingredients ?? []).filter(Boolean).join("、");
+  const what = list ? `${title}（主な材料: ${list}）` : title;
+  return `次の料理を、以下の仕様でイラストに描いてください。
+
+【描く料理】
+${what}
+
+材料から素直に想像できる、ごく一般的な盛り付けにしてください。
+凝った飾り付け、添え物、ソースの模様は加えないでください。
+
+${STYLE_SPEC}`;
+}
+
 
 /** イラスト用のプロンプト版。上の文を変えたら必ず上げる */
 export const ILLUSTRATE_PROMPT_VERSION = "2026-08-20.1";
@@ -107,7 +137,11 @@ export function refusalReason(json) {
  * @param {{ image: {mediaType: string, base64: string}, model: "lite"|"flash", deadlineAt: number }} args
  * @returns {Promise<{ base64: string, mediaType: string, model: string }>}
  */
-export async function illustrate(env, { image, model, deadlineAt }) {
+/**
+ * 写真から描き直す（image）か、レシピから描き起こす（recipe）。
+ * どちらか一方が必ず入る前提で、入口（index.js）が保証している。
+ */
+export async function illustrate(env, { image, recipe, model, deadlineAt }) {
   const id = modelId(env, model);
   const remaining = deadlineAt - Date.now();
   if (remaining <= 2_000) {
@@ -130,10 +164,12 @@ export async function illustrate(env, { image, model, deadlineAt }) {
       body: JSON.stringify({
         contents: [
           {
-            parts: [
-              { inline_data: { mime_type: image.mediaType, data: image.base64 } },
-              { text: ILLUSTRATE_PROMPT },
-            ],
+            parts: image
+              ? [
+                  { inline_data: { mime_type: image.mediaType, data: image.base64 } },
+                  { text: ILLUSTRATE_PROMPT },
+                ]
+              : [{ text: buildRecipePrompt(recipe) }],
           },
         ],
         generationConfig: { responseModalities: ["IMAGE"] },

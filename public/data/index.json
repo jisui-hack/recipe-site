@@ -62,55 +62,5 @@
     "genre": [
       "中華風"
     ]
-  },
-  {
-    "id": "2026-0003-oyakodon",
-    "title": "フライパンひとつで親子丼",
-    "thumb": null,
-    "timeMinutes": 12,
-    "createdAt": "2026-08-08",
-    "protein": [
-      "鶏肉",
-      "卵"
-    ],
-    "plant": [
-      "玉ねぎ"
-    ],
-    "genre": [
-      "和風"
-    ]
-  },
-  {
-    "id": "2026-0002-yasai-itame",
-    "title": "冷蔵庫掃除の野菜炒め",
-    "thumb": null,
-    "timeMinutes": 8,
-    "createdAt": "2026-08-07",
-    "protein": [
-      "豚肉"
-    ],
-    "plant": [
-      "キャベツ",
-      "にんじん"
-    ],
-    "genre": [
-      "中華風"
-    ]
-  },
-  {
-    "id": "2026-0001-gyudon",
-    "title": "簡単10分 牛丼",
-    "thumb": null,
-    "timeMinutes": 10,
-    "createdAt": "2026-08-06",
-    "protein": [
-      "牛肉"
-    ],
-    "plant": [
-      "玉ねぎ"
-    ],
-    "genre": [
-      "和風"
-    ]
   }
 ]

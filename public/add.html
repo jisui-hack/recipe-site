@@ -78,8 +78,8 @@
     </div>
 
     <section id="illustrate" class="illustrate" hidden>
-      <h3 class="illustrate-title">写真をイラストにする</h3>
-      <p class="muted note">
+      <h3 class="illustrate-title" id="il-title">写真をイラストにする</h3>
+      <p class="muted note" id="il-note">
         料理だけを描き直すので、部屋・手・同席者は写りません。1枚あたり約5円かかります。
       </p>
       <div class="row-actions">
@@ -100,7 +100,7 @@
           <button type="button" id="il-again" class="link-btn">もう一度</button>
           <a id="il-download" class="link-btn" href="#" download>画像を保存</a>
         </div>
-        <p class="muted note">
+        <p class="muted note" id="il-result-note">
           器と机以外に何か写っていないか、投稿前に一度確認してください。
           X に上げるときは「画像を保存」してから投稿画面で添付します。
         </p>
@@ -214,11 +214,32 @@
 
     <div class="row-actions">
       <button type="button" id="btn-preview" class="btn btn-plain">プレビュー</button>
-      <button type="submit" id="btn-submit" class="btn">投稿する</button>
+      <button type="submit" id="btn-submit" class="btn">GitHub に投稿する</button>
+      <span id="edit-badge" class="edit-badge" hidden></span>
     </div>
   </form>
 
   <p id="form-error" class="form-error" hidden></p>
+
+  <details class="edit-pick" id="edit-pick">
+    <summary>投稿済みのレシピを直す・消す</summary>
+    <p class="muted note">
+      選ぶとフォームに読み込みます。直して「この内容で上書きする」を押すと、同じ ID のまま置き換わります。
+      投稿日と、画像を選び直さない場合のサムネイルはそのままです。
+    </p>
+    <div class="edit-search">
+      <label class="visually-hidden" for="edit-query">レシピを絞り込む</label>
+      <input id="edit-query" type="search" placeholder="料理名・材料タグで絞り込む" autocomplete="off">
+      <span id="edit-count" class="muted"></span>
+    </div>
+    <ul id="edit-list" class="edit-list"></ul>
+    <div class="row-actions">
+      <button type="button" id="edit-reload" class="link-btn">一覧を読み直す</button>
+      <button type="button" id="edit-cancel" class="link-btn" hidden>新規作成に戻す</button>
+      <button type="button" id="edit-delete" class="link-btn danger" hidden>このレシピを削除</button>
+      <span id="edit-status" class="muted" role="status" aria-live="polite"></span>
+    </div>
+  </details>
 
   <section id="progress-area" hidden>
     <h2>投稿の進捗</h2>
@@ -236,6 +257,7 @@
 </main>
 
 <script type="module" src="assets/add.js"></script>
+<script type="module" src="assets/edit.js"></script>
 <!-- AI下書き。この1行を消せば、フォームは元の手入力だけの状態に戻る -->
 <script type="module" src="assets/ai-draft.js"></script>
 </body>

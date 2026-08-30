@@ -186,6 +186,35 @@ async function handleDraft(request, env, ctx, { requestId, origin }) {
 
 const ILLUSTRATE_MAX_BYTES = 4_000_000; // 元写真。draft より大きめに許す
 
+/**
+ * レシピ経路の入力を整える。
+ *
+ * この文字列は画像生成プロンプトに埋め込まれるので、**素通しにしない。**
+ * 改行と制御文字を落とし、長さを絞る（指示文に見える行を混ぜられないため）。
+ * 語彙の検証まではしない。ここは絵柄の材料であって、コミットされる値ではない。
+ */
+const RECIPE_TITLE_MAX = 60;
+const RECIPE_INGREDIENT_MAX = 30;
+const RECIPE_INGREDIENT_COUNT = 12;
+
+function cleanLine(value, max) {
+  if (typeof value !== "string") return "";
+  // eslint-disable-next-line no-control-regex
+  return value.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
+}
+
+function normalizeRecipeInput(raw) {
+  const title = cleanLine(raw.title, RECIPE_TITLE_MAX);
+  if (!title) return null;
+  const ingredients = Array.isArray(raw.ingredients)
+    ? raw.ingredients
+        .map((v) => cleanLine(v, RECIPE_INGREDIENT_MAX))
+        .filter(Boolean)
+        .slice(0, RECIPE_INGREDIENT_COUNT)
+    : [];
+  return { title, ingredients };
+}
+
 function base64Bytes(b64) {
   const clean = b64.replace(/\s/g, "");
   const pad = clean.endsWith("==") ? 2 : clean.endsWith("=") ? 1 : 0;
@@ -206,16 +235,33 @@ async function handleIllustrate(request, env, ctx, { requestId, origin }) {
   if (body?.schemaVersion !== 1) {
     return err(400, "INVALID_REQUEST", requestId, origin, { detail: "schemaVersion は 1 のみ" });
   }
-  const image = body.image;
-  if (!image || typeof image.base64 !== "string" || !image.base64) {
-    return err(400, "INVALID_REQUEST", requestId, origin, { detail: "image がありません" });
+  // 入口は2つ。写真から描き直すか、レシピの文面から描き起こすか。
+  // どちらか一方だけ。両方来たら意図が読めないので弾く。
+  const image = body.image ?? null;
+  const hasImage = Boolean(image && typeof image.base64 === "string" && image.base64);
+  const hasRecipe = Boolean(body.recipe && typeof body.recipe === "object");
+
+  if (hasImage === hasRecipe) {
+    return err(400, "INVALID_REQUEST", requestId, origin, {
+      detail: hasImage ? "image と recipe は同時に指定できません" : "image か recipe が必要です",
+    });
   }
-  if (!["image/jpeg", "image/png", "image/webp"].includes(image.mediaType)) {
-    return err(400, "INVALID_REQUEST", requestId, origin, { detail: "対応していない画像形式です" });
+
+  let recipe = null;
+  if (hasImage) {
+    if (!["image/jpeg", "image/png", "image/webp"].includes(image.mediaType)) {
+      return err(400, "INVALID_REQUEST", requestId, origin, { detail: "対応していない画像形式です" });
+    }
+    if (base64Bytes(image.base64) > ILLUSTRATE_MAX_BYTES) {
+      return err(413, "PAYLOAD_TOO_LARGE", requestId, origin);
+    }
+  } else {
+    recipe = normalizeRecipeInput(body.recipe);
+    if (!recipe) {
+      return err(400, "INVALID_REQUEST", requestId, origin, { detail: "recipe.title が必要です" });
+    }
   }
-  if (base64Bytes(image.base64) > ILLUSTRATE_MAX_BYTES) {
-    return err(413, "PAYLOAD_TOO_LARGE", requestId, origin);
-  }
+
   const model = body.model === "flash" ? "flash" : "lite";
 
   // 画像は1枚が高い。呼ぶと決まってから枠を消費する
@@ -227,12 +273,18 @@ async function handleIllustrate(request, env, ctx, { requestId, origin }) {
 
   let out;
   try {
-    out = await illustrate(env, { image: { ...image, base64: image.base64.replace(/\s/g, "") }, model, deadlineAt });
+    out = await illustrate(env, {
+      image: hasImage ? { ...image, base64: image.base64.replace(/\s/g, "") } : null,
+      recipe,
+      model,
+      deadlineAt,
+    });
   } catch (e) {
     const up = e instanceof IllustrateError ? e : null;
     log({
       requestId,
       event: "illustrate.failed",
+      source: hasImage ? "photo" : "recipe",
       code: up?.code ?? "UPSTREAM_ERROR",
       reason: up?.detail?.reason ?? "unknown",
       model: up?.detail?.model ?? null,
@@ -245,9 +297,10 @@ async function handleIllustrate(request, env, ctx, { requestId, origin }) {
   log({
     requestId,
     event: "illustrate.completed",
+    source: hasImage ? "photo" : "recipe",
     model: out.model,
     promptVersion: ILLUSTRATE_PROMPT_VERSION,
-    inBytes: base64Bytes(image.base64),
+    inBytes: hasImage ? base64Bytes(image.base64) : 0,
     outBytes: base64Bytes(out.base64),
     latencyMs: Date.now() - startedAt,
     todayCount: rl.count,

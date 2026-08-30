@@ -21,6 +21,8 @@ const MAX = {
   step: 120,
   notes: 300,
   rationale: 400,
+  // プロンプトの指示は125文字。ここは暴走を止める最後の砦なので少し余裕を持たせる
+  // （125ちょうどで切ると、わずかに超えただけの文が途中で千切れる）
   xPost: 140,
   followUpMessage: 100,
 };
@@ -122,7 +124,11 @@ function clipConfidence(conf, { inputKinds, ingredients, imageKind }) {
 export function normalizeXPost(raw) {
   let s = trim(raw);
   if (!s) return "";
-  s = s.replace(/https?:\/\/\S+/g, "").replace(/[ \t]{2,}/g, " ");
+  s = s.replace(/https?:\/\/\S+/g, "");
+  // ハッシュタグは付けない方針（2026-08-26）。プロンプトで禁じているが、
+  // モデルは習慣的に付けたがるので出口でも落とす。URL と同じ扱い。
+  s = s.replace(/[#＃][^\s#＃]+/g, "");
+  s = s.replace(/[ \t]{2,}/g, " ");
   // 末尾に取り残された記号や空行を整える
   s = s.replace(/\n{3,}/g, "\n\n").replace(/^[\s　]+|[\s　]+$/g, "");
   return s;
