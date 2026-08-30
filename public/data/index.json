@@ -2,7 +2,7 @@
   {
     "id": "2026-0004-0dwz",
     "title": "豚肉とごぼうの山椒煮",
-    "thumb": null,
+    "thumb": "data/images/2026-0004-0dwz.jpg",
     "timeMinutes": 15,
     "createdAt": "2026-08-26",
     "protein": [
@@ -18,7 +18,7 @@
   {
     "id": "2026-0005-ecao",
     "title": "ほうれん草とベーコンのにんにく炒め",
-    "thumb": null,
+    "thumb": "data/images/2026-0005-ecao.jpg",
     "timeMinutes": 10,
     "createdAt": "2026-08-26",
     "protein": [
@@ -51,7 +51,7 @@
   {
     "id": "2026-0007-dgoc",
     "title": "えびと卵の中華風炒め",
-    "thumb": null,
+    "thumb": "data/images/2026-0007-dgoc.jpg",
     "timeMinutes": 10,
     "createdAt": "2026-08-26",
     "protein": [

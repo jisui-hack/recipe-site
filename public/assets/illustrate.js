@@ -70,10 +70,20 @@ export function setSourcePhoto(blob) {
  */
 function recipeFromForm() {
   const title = ($("f-title")?.value ?? "").trim();
-  const names = [...document.querySelectorAll("#ing-rows .ing-name")]
+
+  // 分量欄と手順に切り方が書かれていることが多い。名前だけ送ると形が変わる
+  const ingredients = [...document.querySelectorAll("#ing-rows .dyn-row")]
+    .map((row) => ({
+      name: row.querySelector(".ing-name")?.value.trim() ?? "",
+      amount: row.querySelector(".ing-amount")?.value.trim() ?? "",
+    }))
+    .filter((i) => i.name);
+
+  const steps = [...document.querySelectorAll("#step-rows .step-text")]
     .map((el) => el.value.trim())
     .filter(Boolean);
-  return { title, ingredients: names };
+
+  return { title, ingredients, steps };
 }
 
 /** 写真が無くても、料理名が入っていれば描ける */

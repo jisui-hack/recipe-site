@@ -203,16 +203,35 @@ function cleanLine(value, max) {
   return value.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
 }
 
+const RECIPE_STEP_MAX = 80;
+const RECIPE_STEP_COUNT = 8;
+
 function normalizeRecipeInput(raw) {
   const title = cleanLine(raw.title, RECIPE_TITLE_MAX);
   if (!title) return null;
+
+  // 材料は文字列でも {name, amount} でも受ける。
+  // 分量に切り方が書かれていることがあるので落とさない
   const ingredients = Array.isArray(raw.ingredients)
     ? raw.ingredients
-        .map((v) => cleanLine(v, RECIPE_INGREDIENT_MAX))
-        .filter(Boolean)
+        .map((v) =>
+          typeof v === "string"
+            ? { name: cleanLine(v, RECIPE_INGREDIENT_MAX), amount: "" }
+            : {
+                name: cleanLine(v?.name, RECIPE_INGREDIENT_MAX),
+                amount: cleanLine(v?.amount, RECIPE_INGREDIENT_MAX),
+              }
+        )
+        .filter((v) => v.name)
         .slice(0, RECIPE_INGREDIENT_COUNT)
     : [];
-  return { title, ingredients };
+
+  // 手順は切り方を拾うためだけに使う。長い注意書きは要らない
+  const steps = Array.isArray(raw.steps)
+    ? raw.steps.map((v) => cleanLine(v, RECIPE_STEP_MAX)).filter(Boolean).slice(0, RECIPE_STEP_COUNT)
+    : [];
+
+  return { title, ingredients, steps };
 }
 
 function base64Bytes(b64) {

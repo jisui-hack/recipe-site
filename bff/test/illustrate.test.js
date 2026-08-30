@@ -353,10 +353,64 @@ describe("レシピから描き起こす（写真が無いとき）", () => {
     expect(r).not.toContain("主な材料");
   });
 
-  it("材料があれば並べる", async () => {
+  it("具材は1行ずつ、分量も添えて渡す（切り方が書かれていることが多い）", async () => {
     const { buildRecipePrompt } = await import("../src/illustrate.js");
-    const r = buildRecipePrompt({ title: "親子丼", ingredients: ["鶏肉", "卵", "玉ねぎ"] });
-    expect(r).toContain("主な材料: 鶏肉、卵、玉ねぎ");
+    const r = buildRecipePrompt({
+      title: "親子丼",
+      ingredients: [{ name: "鶏もも肉", amount: "ひと口大" }, { name: "玉ねぎ", amount: "薄切り" }],
+    });
+    expect(r).toContain("【皿に見える具材】\n鶏もも肉 ひと口大\n玉ねぎ 薄切り");
+  });
+
+  it("調味料は具材と分ける（姿を与えて描かせない）", async () => {
+    const { buildRecipePrompt } = await import("../src/illustrate.js");
+    const r = buildRecipePrompt({
+      title: "豚肉とごぼうの山椒煮",
+      ingredients: [{ name: "ごぼう" }, { name: "豚バラ肉" }, { name: "醤油" }, { name: "山椒（または七味）" }],
+    });
+
+    // 山椒を具材として渡したら、青唐辛子が4本描かれた
+    expect(r).toContain("【皿に見える具材】\nごぼう\n豚バラ肉");
+    expect(r).toContain("【味つけ】\n醤油、山椒（または七味）");
+    expect(r).toContain("粒・実・さやなどの姿では描かないでください");
+  });
+
+  it("水は具材にも味つけにも入れない", async () => {
+    const { buildRecipePrompt } = await import("../src/illustrate.js");
+    const r = buildRecipePrompt({
+      title: "煮物",
+      ingredients: [{ name: "大根" }, { name: "水", amount: "ひたひた" }],
+    });
+    expect(r).not.toContain("水");
+  });
+
+  it("切り方は手順から拾う。分量欄に無いことが多い", async () => {
+    const { buildRecipePrompt } = await import("../src/illustrate.js");
+    const r = buildRecipePrompt({
+      title: "豚肉とごぼうの山椒煮",
+      ingredients: [{ name: "ごぼう" }],
+      steps: ["ごぼうを薄めの細切りにする。冷凍ごぼうで代用してもよい。", "フライパンにごぼうを入れる。"],
+    });
+
+    // 文で切る。行ごと渡すと関係ない話まで絵の材料になる
+    expect(r).toContain("【切り方】\nごぼうを薄めの細切りにする。");
+    expect(r).not.toContain("冷凍ごぼう");
+  });
+
+  it("切る話が無ければ切り方の欄を出さない", async () => {
+    const { buildRecipePrompt } = await import("../src/illustrate.js");
+    const r = buildRecipePrompt({
+      title: "温めるだけ",
+      ingredients: [{ name: "レトルト" }],
+      steps: ["湯煎で温める。"],
+    });
+    expect(r).not.toContain("【切り方】");
+  });
+
+  it("文字列の配列でも受ける（古い呼び出しを壊さない）", async () => {
+    const { buildRecipePrompt } = await import("../src/illustrate.js");
+    const r = buildRecipePrompt({ title: "親子丼", ingredients: ["鶏肉", "卵"] });
+    expect(r).toContain("【皿に見える具材】\n鶏肉\n卵");
   });
 
   it("盛り付けの創作を抑える一文が入る（作っていないものを凝って見せない）", async () => {

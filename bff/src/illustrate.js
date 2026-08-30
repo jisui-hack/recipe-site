@@ -53,15 +53,114 @@ ${STYLE_SPEC}`;
  * **「実際に作った1皿」ではなく「この料理の一般的な盛り付け」を描かせる。**
  * 手元に無いものを写真のように装わせないため、盛り付けの創作は最小限に寄せる。
  */
-export function buildRecipePrompt({ title, ingredients }) {
-  const list = (ingredients ?? []).filter(Boolean).join("、");
-  const what = list ? `${title}（主な材料: ${list}）` : title;
+/**
+ * 皿の上で姿が見えないもの。**具材として渡すと、姿を与えて描いてしまう。**
+ * 実際に「山椒」を渡したら青唐辛子が4本描かれた。
+ *
+ * にんにく・生姜・ねぎ・ごまは切り方によって見えるので入れない。
+ * ここは「溶けて色と照りになるもの」だけ。
+ */
+/** 皿の上にも味にも出ないもの。渡す意味がない */
+const IGNORED = ["水", "お湯", "湯"];
+
+const SEASONINGS = [
+  "塩", "こしょう", "コショウ", "胡椒", "砂糖", "味の素",
+  "醤油", "しょうゆ", "みりん", "酒", "酢", "みそ", "味噌",
+  "油", "バター", "マヨネーズ", "ケチャップ", "ソース", "ポン酢", "めんつゆ",
+  "だし", "出汁", "コンソメ", "鶏がら",
+  "カレー粉", "山椒", "七味", "一味", "はちみつ", "蜂蜜",
+  "片栗粉", "小麦粉",
+];
+
+function isSeasoning(name) {
+  return SEASONINGS.some((s) => name.includes(s));
+}
+
+function isIgnored(name) {
+  return IGNORED.some((s) => name === s || name.startsWith(s));
+}
+
+/**
+ * 材料を「皿に見える具材」と「味つけ」に分ける。
+ *
+ * 分ける理由は2つ。
+ *   1. 調味料を具材として渡すと姿を与えて描く（山椒 → 青唐辛子）
+ *   2. 具材には切り方を添えたい。「ごぼう」だけだと輪切りになる。
+ *      分量欄に「薄めの細切り」と書いてあるので、それを渡す
+ */
+export function splitIngredients(ingredients) {
+  const solid = [];
+  const seasoning = [];
+
+  for (const raw of ingredients ?? []) {
+    const item = typeof raw === "string" ? { name: raw, amount: "" } : (raw ?? {});
+    const name = String(item.name ?? "").trim();
+    if (!name || isIgnored(name)) continue;
+
+    if (isSeasoning(name)) {
+      seasoning.push(name);
+    } else {
+      const amount = String(item.amount ?? "").trim();
+      solid.push(amount ? `${name} ${amount}` : name);
+    }
+  }
+  return { solid, seasoning };
+}
+
+/**
+ * 手順から切り方だけ拾う。
+ *
+ * **切り方は分量欄ではなく手順に書かれていることが多い。**
+ * 「ごぼう」とだけ渡したら輪切りで描かれた。実際のレシピには
+ * 「ごぼうを薄めの細切りにする」と書いてある。ここが伝わらないと形が変わる。
+ *
+ * 手順を丸ごと渡すと調理工程の絵になりかねないので、切る話だけに絞る。
+ */
+const CUT_WORDS = /(切り|切る|そぎ|ささがき|みじん|千切|細切|薄切|ざく切|乱切|輪切|くし形|ちぎ|すりおろ|おろす)/;
+
+/**
+ * **文単位で拾う。** 手順1行には切り方のあとに別の話が続くことが多い
+ * （「ごぼうを薄めの細切りにする。冷凍ごぼうがあれば代用してもよい。」）。
+ * 行ごと渡すと、関係ない文まで絵の材料にしてしまう。
+ */
+export function cutHints(steps, max = 2) {
+  const hits = [];
+  for (const step of steps ?? []) {
+    for (const sentence of String(step ?? "").split(/(?<=。)/)) {
+      const t = sentence.trim();
+      if (t && CUT_WORDS.test(t)) hits.push(t);
+      if (hits.length >= max) return hits;
+    }
+  }
+  return hits;
+}
+
+export function buildRecipePrompt({ title, ingredients, steps }) {
+  const { solid, seasoning } = splitIngredients(ingredients);
+  const cuts = cutHints(steps);
+
+  const blocks = [`【描く料理】\n${title}`];
+
+  if (solid.length) {
+    // 分量欄に切り方が書いてあることが多い。それが伝わらないと形が変わる
+    blocks.push(`【皿に見える具材】\n${solid.join("\n")}`);
+  }
+  if (cuts.length) {
+    blocks.push(`【切り方】\n${cuts.join("\n")}`);
+  }
+  if (seasoning.length) {
+    blocks.push(
+      `【味つけ】\n${seasoning.join("、")}\n` +
+        "味つけは色と照りにだけ反映してください。粒・実・さやなどの姿では描かないでください。"
+    );
+  }
+
   return `次の料理を、以下の仕様でイラストに描いてください。
 
-【描く料理】
-${what}
+${blocks.join("\n\n")}
 
 材料から素直に想像できる、ごく一般的な盛り付けにしてください。
+**上に挙げていないものを足さないでください。**
 凝った飾り付け、添え物、ソースの模様は加えないでください。
 
 ${STYLE_SPEC}`;
@@ -69,7 +168,7 @@ ${STYLE_SPEC}`;
 
 
 /** イラスト用のプロンプト版。上の文を変えたら必ず上げる */
-export const ILLUSTRATE_PROMPT_VERSION = "2026-08-20.1";
+export const ILLUSTRATE_PROMPT_VERSION = "2026-08-30.1";
 
 /**
  * 使うモデル。2026-08-20 に Gemini API のモデル一覧で確認済み。
