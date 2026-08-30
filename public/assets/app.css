@@ -603,3 +603,33 @@ ol.steps li { margin-bottom: 8px; }
   border-radius: 4px;
   font-weight: 700;
 }
+
+/* --- 指で押す端末 --------------------------------------------------------
+   指で押せる大きさは 44px 角が目安。マウスなら 28px でも狙えるが、
+   スマホだと隣を押してしまう。**タップ端末でだけ**広げる。
+   幅ではなく pointer で分ける（タブレットの横向きでも指は指なので）。 */
+@media (pointer: coarse) {
+  .link-btn,
+  .row-remove,
+  .chip,
+  .chip-tag {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 折りたたみの見出しも押しやすくする */
+  summary {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* 材料・手順の削除ボタンは行の高さに合わせて縦に伸ばす */
+  .dyn-row .row-remove { min-width: 44px; }
+
+  /* 検索欄と一覧の項目も指で押す前提の高さに */
+  .edit-search input { min-height: 44px; }
+  .edit-item { padding-block: .75rem; }
+}
