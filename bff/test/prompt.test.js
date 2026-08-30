@@ -47,7 +47,7 @@ describe("buildTool", () => {
   it("xPost が必須に入っている（X 紹介文を同時に生成させる）", () => {
     const props = buildTool(VOCAB).input_schema.properties;
     expect(props.xPost.type).toBe("string");
-    expect(props.xPost.maxLength).toBe(125);
+    expect(props.xPost.maxLength).toBe(145);
     expect(buildTool(VOCAB).input_schema.required).toContain("xPost");
   });
 

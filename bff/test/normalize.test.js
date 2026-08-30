@@ -211,6 +211,29 @@ describe("X の紹介文（xPost）", () => {
     expect(out.xPost).toContain("10分でできる");
   });
 
+  it("改行を保つ（レシピの形をそのまま出すため）", () => {
+    const body = [
+      "豚ひき肉は炒め料理を基本に考える。おすすめはドライカレー。",
+      "",
+      "【材料】2人分",
+      "豚ひき肉 200g",
+      "玉ねぎ 1/2個",
+      "",
+      "【作り方】",
+      "1 なすを素揚げする",
+      "2 ひき肉と玉ねぎを炒める",
+    ].join("\n");
+    const out = normalizeDraft(rawDraft({ xPost: body }), ctx());
+
+    expect(out.xPost).toBe(body);
+    expect(out.xPost.split("\n")).toHaveLength(9);
+  });
+
+  it("空行が3行以上続いたら2行にまとめる", () => {
+    const out = normalizeDraft(rawDraft({ xPost: "紹介文。\n\n\n\n【材料】2人分\nなす 2本" }), ctx());
+    expect(out.xPost).toBe("紹介文。\n\n【材料】2人分\nなす 2本");
+  });
+
   it("ハッシュタグは落とす（プロンプトで禁じても書いてくるため）", () => {
     const out = normalizeDraft(
       rawDraft({ xPost: "ごぼうは煮物と相性がいい。15分ほどで作れる。#自炊ハック #作り置き" }),
@@ -227,7 +250,7 @@ describe("X の紹介文（xPost）", () => {
 
   it("長すぎたら切り詰める", () => {
     const out = normalizeDraft(rawDraft({ xPost: "あ".repeat(300) }), ctx());
-    expect(out.xPost.length).toBeLessThanOrEqual(140);
+    expect(out.xPost.length).toBeLessThanOrEqual(170);
   });
 
   it("無くても落ちない", () => {
