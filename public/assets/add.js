@@ -359,6 +359,25 @@ async function ghGet(cfg, path) {
   return res.json();
 }
 
+/**
+ * ファイルを消す。**GitHub は sha が無いと消させない。**
+ * 消えていた（404）場合は成功扱いにする。途中で失敗した削除をやり直せるように。
+ */
+async function deleteFile(cfg, { path, message }) {
+  const file = await ghGet(cfg, path);
+  if (!file) return false;
+  const res = await fetch(apiUrl(cfg, path), {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${cfg.token}`,
+      Accept: "application/vnd.github+json",
+    },
+    body: JSON.stringify({ message, sha: file.sha, branch: cfg.branch }),
+  });
+  if (!res.ok) throw new Error(`${path}: ${describeError(res.status, await res.text())}`);
+  return true;
+}
+
 async function putFile(cfg, { path, contentBase64, message, sha }) {
   const res = await fetch(apiUrl(cfg, path), {
     method: "PUT",
@@ -390,17 +409,65 @@ function renderProgress(steps) {
 
 let job = null;
 
+/**
+ * 編集中のレシピ。新規投稿のときは null。
+ *
+ * 新規と編集で変わるのは3つだけ。
+ *   1. ID を採番せず、既存のものを使う
+ *   2. 上書きなので GitHub Contents API に sha を渡す（無いと 422 になる）
+ *   3. createdAt と、画像を差し替えない場合の thumb を元のまま残す
+ *
+ * それ以外（検証・タグ・index の更新）は新規投稿とまったく同じ道を通る。
+ */
+let editing = null;
+
+/** 編集モードに入る。recipe は data/recipes/<id>.json の中身そのまま */
+export function startEditing(recipe) {
+  editing = { id: recipe.id, createdAt: recipe.createdAt, thumb: recipe.thumb ?? null };
+  syncModeLabel();
+}
+
+/** 新規投稿に戻す */
+export function stopEditing() {
+  editing = null;
+  syncModeLabel();
+}
+
+export function editingRecipe() {
+  return editing;
+}
+
+/** 「投稿する」か「上書きする」か。押す前に分かるようにしておく */
+function syncModeLabel() {
+  const submit = document.getElementById("btn-submit");
+  if (submit) submit.textContent = editing ? "この内容で上書きする" : "GitHub に投稿する";
+  const badge = document.getElementById("edit-badge");
+  if (badge) {
+    badge.hidden = !editing;
+    if (editing) badge.textContent = `${editing.id} を編集中`;
+  }
+}
+
 function buildJob(form) {
   return {
     form,
+    editing,
     id: null,
     index: null,
     imageBlob: null,
     recipe: null,
     steps: [
-      { key: "index", label: "index.json を読み込み、IDを採番", state: "todo" },
+      {
+        key: "index",
+        label: editing ? "index.json を読み込み、IDを確認" : "index.json を読み込み、IDを採番",
+        state: "todo",
+      },
       { key: "image", label: "サムネイル画像をコミット", state: "todo" },
-      { key: "recipe", label: "レシピ本体をコミット", state: "todo" },
+      {
+        key: "recipe",
+        label: editing ? "レシピ本体を上書き" : "レシピ本体をコミット",
+        state: "todo",
+      },
       { key: "reindex", label: "index.json を更新", state: "todo" },
     ],
   };
@@ -422,6 +489,10 @@ const RUNNERS = {
   async index(cfg) {
     const file = await ghGet(cfg, `${REPO_PREFIX}data/index.json`);
     job.index = file ? JSON.parse(b64ToText(file.content)) : [];
+    if (job.editing) {
+      job.id = job.editing.id;
+      return `id = ${job.id}（既存を上書き）`;
+    }
     job.id = nextId(job.index, job.form.title);
     return `id = ${job.id}`;
   },
@@ -430,15 +501,23 @@ const RUNNERS = {
     const input = document.getElementById("f-image");
     const file = input.files?.[0];
     if (!file) {
+      if (job.editing?.thumb) {
+        step.label = "サムネイル画像（そのまま）";
+        return `${job.editing.thumb} を変更しません`;
+      }
       step.label = "サムネイル画像（なし）";
       return "画像なしで投稿します";
     }
     job.imageBlob = job.imageBlob ?? (await shrinkImage(file));
     const bytes = new Uint8Array(await job.imageBlob.arrayBuffer());
+    const path = `${REPO_PREFIX}data/images/${job.id}.jpg`;
+    // 既にあるファイルの上書きは sha が要る（無いと 422）。直前に取り直す
+    const existing = job.editing ? await ghGet(cfg, path) : null;
     await putFile(cfg, {
-      path: `${REPO_PREFIX}data/images/${job.id}.jpg`,
+      path,
       contentBase64: bytesToB64(bytes),
-      message: `add image ${job.id}`,
+      message: `${job.editing ? "update" : "add"} image ${job.id}`,
+      sha: existing?.sha,
     });
     return `data/images/${job.id}.jpg（約${Math.round(job.imageBlob.size / 1024)}KB）`;
   },
@@ -448,7 +527,8 @@ const RUNNERS = {
     job.recipe = {
       id: job.id,
       title: f.title,
-      thumb: job.imageBlob ? `data/images/${job.id}.jpg` : null,
+      // 画像を選び直していなければ、元の thumb をそのまま残す
+      thumb: job.imageBlob ? `data/images/${job.id}.jpg` : (job.editing?.thumb ?? null),
       timeMinutes: f.timeMinutes,
       servings: f.servings,
       ingredients: f.ingredients,
@@ -457,13 +537,17 @@ const RUNNERS = {
       plant: f.plant,
       genre: f.genre,
       sourceUrl: f.sourceUrl,
-      createdAt: f.createdAt,
+      // 編集では投稿日を動かさない。一覧の並び順が変わってしまう
+      createdAt: job.editing?.createdAt ?? f.createdAt,
       notes: f.notes,
     };
+    const path = `${REPO_PREFIX}data/recipes/${job.id}.json`;
+    const existing = job.editing ? await ghGet(cfg, path) : null;
     await putFile(cfg, {
-      path: `${REPO_PREFIX}data/recipes/${job.id}.json`,
+      path,
       contentBase64: textToB64(JSON.stringify(job.recipe, null, 2) + "\n"),
-      message: `add recipe ${job.id}: ${f.title}`,
+      message: `${job.editing ? "update" : "add"} recipe ${job.id}: ${f.title}`,
+      sha: existing?.sha,
     });
     return `data/recipes/${job.id}.json`;
   },
@@ -482,6 +566,100 @@ const RUNNERS = {
     return `${next.length}件になりました`;
   },
 };
+
+/**
+ * 削除の手順。投稿と同じ進捗表示に載せる。
+ *
+ * 消す順番は **本体 → 画像 → index**。逆にすると、index から消えたのに
+ * 本体が残る状態が生まれ、一覧に出ないファイルが積もる。
+ */
+const DELETE_RUNNERS = {
+  async recipe(cfg) {
+    await deleteFile(cfg, {
+      path: `${REPO_PREFIX}data/recipes/${job.id}.json`,
+      message: `delete recipe ${job.id}`,
+    });
+    return `data/recipes/${job.id}.json`;
+  },
+
+  async image(cfg, step) {
+    if (!job.deleting.thumb) {
+      step.label = "サムネイル画像（なし）";
+      return "画像はありません";
+    }
+    const removed = await deleteFile(cfg, {
+      path: `${REPO_PREFIX}${job.deleting.thumb}`,
+      message: `delete image ${job.id}`,
+    });
+    return removed ? job.deleting.thumb : "既にありませんでした";
+  },
+
+  async reindex(cfg) {
+    const file = await ghGet(cfg, `${REPO_PREFIX}data/index.json`);
+    const current = file ? JSON.parse(b64ToText(file.content)) : [];
+    const next = current.filter((r) => r.id !== job.id);
+    await putFile(cfg, {
+      path: `${REPO_PREFIX}data/index.json`,
+      contentBase64: textToB64(JSON.stringify(next, null, 2) + "\n"),
+      message: `reindex after deleting ${job.id}`,
+      sha: file?.sha,
+    });
+    return `${next.length}件になりました`;
+  },
+};
+
+/**
+ * 投稿済みのレシピを消す。
+ * **戻せない操作なので、呼ぶ側で確認を取ってから呼ぶこと。**
+ */
+export async function deleteRecipe({ id, title, thumb }) {
+  const cfg = loadConfig();
+  if (!cfg.owner || !cfg.repo || !cfg.token) {
+    showErrors(["GitHub 設定（owner / repo / トークン）を先に保存してください。"]);
+    document.getElementById("settings").open = true;
+    return false;
+  }
+
+  job = {
+    id,
+    deleting: { title, thumb: thumb ?? null },
+    steps: [
+      { key: "recipe", label: "レシピ本体を削除", state: "todo" },
+      { key: "image", label: "サムネイル画像を削除", state: "todo" },
+      { key: "reindex", label: "index.json を更新", state: "todo" },
+    ],
+  };
+
+  const result = document.getElementById("result");
+  result.hidden = true;
+
+  for (const step of job.steps) {
+    step.state = "doing";
+    renderProgress(job.steps);
+    try {
+      step.detail = await DELETE_RUNNERS[step.key](cfg, step);
+      step.state = "done";
+    } catch (err) {
+      step.state = "fail";
+      step.detail = err.message;
+      renderProgress(job.steps);
+      job = null;
+      return false;
+    }
+    renderProgress(job.steps);
+  }
+
+  result.hidden = false;
+  result.replaceChildren(
+    el("strong", { text: `「${title}」を削除しました。` }),
+    el("br"),
+    el("span", { class: "muted", text: "GitHub Pages への反映まで数十秒かかります。" })
+  );
+
+  stopEditing();
+  job = null;
+  return true;
+}
 
 async function runJob() {
   const cfg = loadConfig();
@@ -520,21 +698,23 @@ async function runJob() {
   submit.disabled = false;
   result.hidden = false;
   result.replaceChildren(
-    el("strong", { text: "投稿しました。" }),
+    el("strong", { text: job.editing ? "上書きしました。" : "投稿しました。" }),
     el("br"),
     el("a", { href: `recipe.html?id=${encodeURIComponent(job.id)}`, text: "このレシピを見る →" }),
     el("br"),
     el("span", { class: "muted", text: "GitHub Pages への反映まで数十秒かかります。" })
   );
-  result.scrollIntoView({ behavior: "smooth", block: "nearest" });
-
-  // 続けて追加できるようにフォームだけ初期化する
+  // 後片付けを先にやる。**編集モードが残ったままだと次の入力が同じ ID を潰す**ので、
+  // 見た目のスクロールより優先する（scrollIntoView で落ちても状態は戻っている）
   document.getElementById("recipe-form").reset();
   document.getElementById("ing-rows").replaceChildren(ingredientRow(), ingredientRow(), ingredientRow());
   document.getElementById("step-rows").replaceChildren(stepRow(), stepRow(), stepRow());
   document.getElementById("image-info").textContent = "";
   clearTags();
+  stopEditing();
   job = null;
+
+  result.scrollIntoView?.({ behavior: "smooth", block: "nearest" });
 }
 
 /* ---------- AI下書き（ai-mapper.js）向けの公開API ---------- */
@@ -544,6 +724,18 @@ async function runJob() {
  */
 
 export { collectForm, ingredientRow, shrinkImage, stepRow, todayISO };
+
+/**
+ * 編集機能（edit.js）向け。GitHub から直接読むために必要。
+ *
+ * **編集はリポジトリの中身を書き換える。** 土台まで公開サイト（GitHub Pages）から
+ * 読むと、反映待ちの数十秒のあいだに古い内容を掴み、直前の変更を巻き戻してしまう。
+ * 読む先と書く先を揃えるために、設定と接頭辞を外に出す。
+ */
+export { REPO_PREFIX };
+export function githubConfig() {
+  return loadConfig();
+}
 
 /**
  * 外部からタグ選択状態を設定する。

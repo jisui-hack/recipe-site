@@ -27,7 +27,7 @@ describe("buildVocabulary", () => {
   it("現在のタグ件数（増減したらここも更新する）", () => {
     const vocab = buildVocabulary();
     expect(vocab.protein).toHaveLength(9);
-    expect(vocab.plant).toHaveLength(19);
+    expect(vocab.plant).toHaveLength(22);
     expect(vocab.genre).toHaveLength(5);
   });
 

@@ -121,7 +121,7 @@ describe("正常系", () => {
 
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(body.vocabulary.protein).toContain("豚肉");
-    expect(body.vocabulary.plant).toHaveLength(19);
+    expect(body.vocabulary.plant).toHaveLength(22);
     expect(body.vocabulary.genre).toHaveLength(5);
     expect(body.schemaVersion).toBe(1);
     expect(fetchMock.mock.calls[0][1].headers["X-Client-Key"]).toBe(KEY);

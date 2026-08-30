@@ -239,9 +239,15 @@ describe("上流の失敗", () => {
 
   it("失敗してもレスポンスに上流の事情を出さない", async () => {
     fetchMock.mockResolvedValue({ ok: false, status: 404, text: async () => "model gemini-x not found" });
-    const text = await (await worker.fetch(req(), makeEnv(), ctx)).text();
-    expect(text).not.toContain("gemini-x");
-    expect(text).not.toContain("404");
+    const body = await (await worker.fetch(req(), makeEnv(), ctx)).json();
+
+    // requestId は毎回変わるランダム値で、たまたま "404" を含むことがある。
+    // 全文を走査すると数百回に1回落ちるので、返している中身だけを見る。
+    const { requestId, ...rest } = body.error;
+    expect(requestId).toBeTruthy();
+    const shown = JSON.stringify(rest);
+    expect(shown).not.toContain("gemini-x");
+    expect(shown).not.toContain("404");
   });
 
   it("ログに画像本体を残さない（サイズだけ）", async () => {
