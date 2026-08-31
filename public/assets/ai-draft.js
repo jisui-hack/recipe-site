@@ -15,7 +15,7 @@ import {
   restoreForm,
   snapshotForm,
 } from "./ai-mapper.js";
-import { el } from "./common.js";
+import { STORAGE_WARNING, el, rememberSetting } from "./common.js";
 import { initIllustrate, refreshIllustrateMode, setSourcePhoto } from "./illustrate.js";
 import { clearXPost, initXPost, showXPost } from "./x-post.js";
 import { TAG_GROUPS } from "./tags.js";
@@ -87,13 +87,19 @@ function initAiSettings() {
 
   document.getElementById("ai-cfg-save").addEventListener("click", () => {
     const ep = epInput.value.trim();
-    if (ep) localStorage.setItem(ENDPOINT_KEY, ep);
-    else localStorage.removeItem(ENDPOINT_KEY);
     const key = keyInput.value.trim();
-    if (key) localStorage.setItem(CLIENT_KEY, key);
-    status.textContent = "保存しました";
+    const okEp = rememberSetting(ENDPOINT_KEY, ep);
+    const okKey = key ? rememberSetting(CLIENT_KEY, key) : true;
+
     syncConfiguredState();
-    box.open = false;
+
+    // 書けていないなら閉じない。閉じると「保存できた」と思ってしまう
+    if (okEp && okKey) {
+      status.textContent = "保存しました";
+      box.open = false;
+    } else {
+      status.textContent = STORAGE_WARNING;
+    }
   });
 
   document.getElementById("ai-cfg-clear").addEventListener("click", () => {

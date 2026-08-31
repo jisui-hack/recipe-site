@@ -91,3 +91,46 @@ export function matchesQuery(recipe, query) {
 export function ingredientTagsOf(recipe) {
   return TAG_GROUPS.filter((g) => g.key !== "genre").flatMap((g) => recipe[g.key] ?? []);
 }
+
+/* ---------- 設定の保存 ---------- */
+
+/**
+ * localStorage へ書いて、**本当に残ったか読み返す。**
+ *
+ * プライベートブラウズや、保存が禁じられた状態では setItem が例外を投げるか、
+ * 投げずに何も残らないことがある。それを見ずに「保存しました」と出していたため、
+ * 次に開くと消えている理由が分からなかった。書けたかどうかを返す。
+ */
+export function rememberSetting(key, value) {
+  try {
+    if (value === null || value === undefined || value === "") {
+      localStorage.removeItem(key);
+      return localStorage.getItem(key) === null;
+    }
+    localStorage.setItem(key, value);
+    return localStorage.getItem(key) === value;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * この端末で設定を覚えていられるか。
+ * 覚えられないなら、入れ直しても無駄だと先に言ったほうがよい。
+ */
+export function storageWorks() {
+  const probe = "__probe__";
+  try {
+    localStorage.setItem(probe, "1");
+    const ok = localStorage.getItem(probe) === "1";
+    localStorage.removeItem(probe);
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
+/** 保存が効かない端末への案内。文言を1か所にまとめる */
+export const STORAGE_WARNING =
+  "この画面では設定を保存できません。プライベートブラウズか、" +
+  "アプリ内ブラウザで開いている可能性があります。Safari や Chrome で開き直してください。";

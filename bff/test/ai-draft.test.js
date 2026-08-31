@@ -9,7 +9,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PUBLIC = join(HERE, "../../public");
@@ -355,5 +355,77 @@ describe("鍵が未設定のとき", () => {
     $("ai-cfg-clear").click();
 
     expect($("ai-draft").classList.contains("is-unconfigured")).toBe(true);
+  });
+});
+
+describe("設定が保存できない端末", () => {
+  /*
+   * プライベートブラウズやアプリ内ブラウザでは setItem が例外を投げる。
+   * 以前はそれを見ずに「保存しました」と出していたので、
+   * **次に開いて消えている理由が分からなかった。**
+   */
+  beforeEach(async () => {
+    document.body.innerHTML = BODY;
+    localStorage.clear();
+    vi.resetModules();
+    await import("../../public/assets/add.js");
+    await import("../../public/assets/ai-draft.js");
+  });
+
+  // 壊した localStorage を次のテストへ持ち越さない
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  /**
+   * プライベートブラウズの再現。jsdom の localStorage は prototype 経由では
+   * 差し替わらないので、インスタンスの setItem を直接置き換える。
+   */
+  function breakStorage() {
+    const real = window.localStorage.setItem.bind(window.localStorage);
+    vi.spyOn(window.localStorage, "setItem").mockImplementation(() => {
+      throw new DOMException("QuotaExceededError");
+    });
+    return real;
+  }
+
+  it("保存できなければ、そう言う（「保存しました」と嘘をつかない）", () => {
+    breakStorage();
+    $("ai-cfg-endpoint").value = "https://bff.test/v1/draft";
+    $("ai-cfg-key").value = KEY;
+    $("ai-cfg-save").click();
+
+    expect($("ai-cfg-status").textContent).not.toContain("保存しました");
+    expect($("ai-cfg-status").textContent).toContain("保存できません");
+  });
+
+  it("保存できなければ設定を閉じない（できたと思わせない）", () => {
+    breakStorage();
+    $("ai-settings").open = true;
+    $("ai-cfg-endpoint").value = "https://bff.test/v1/draft";
+    $("ai-cfg-key").value = KEY;
+    $("ai-cfg-save").click();
+
+    expect($("ai-settings").open).toBe(true);
+    expect($("ai-draft").classList.contains("is-unconfigured")).toBe(true);
+  });
+
+  it("GitHub 設定でも同じ", () => {
+    breakStorage();
+    $("cfg-owner").value = "jisui-hack";
+    $("cfg-repo").value = "recipe-site";
+    $("cfg-token").value = "github_pat_x";
+    $("cfg-save").click();
+
+    expect($("cfg-status").textContent).toContain("保存できません");
+  });
+
+  it("書けるときは今までどおり", () => {
+    $("ai-cfg-endpoint").value = "https://bff.test/v1/draft";
+    $("ai-cfg-key").value = KEY;
+    $("ai-cfg-save").click();
+
+    expect($("ai-cfg-status").textContent).toBe("保存しました");
+    expect(localStorage.getItem("ai_bff_key")).toBe(KEY);
   });
 });

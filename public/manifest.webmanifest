@@ -1,0 +1,16 @@
+{
+  "name": "自炊の本棚",
+  "short_name": "本棚",
+  "description": "自分で作ったレシピを貯める本棚",
+  "start_url": "./add.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7f3e6",
+  "theme_color": "#2c6e4f",
+  "lang": "ja",
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

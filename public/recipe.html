@@ -5,6 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>レシピ | 自炊の本棚</title>
 <link rel="stylesheet" href="assets/app.css">
+<!-- ホーム画面に追加できるようにする。
+     iOS は「サイトを7日間開かないと localStorage を消す」が、
+     ホーム画面から開くアプリはその対象外になる。
+     トークンを入れ直さずに済ませるための対策。 -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="本棚">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#2c6e4f">
 </head>
 <body>
 <header class="site-header">
