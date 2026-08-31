@@ -1,6 +1,6 @@
 /* 投稿フォーム → GitHub Contents API 直コミット */
 
-import { byNewest, el } from "./common.js";
+import { STORAGE_WARNING, byNewest, el, rememberSetting, storageWorks } from "./common.js";
 import { renderRecipe } from "./recipe.js";
 import { TAG_GROUPS } from "./tags.js";
 
@@ -52,9 +52,12 @@ function initSettings() {
     const repo = document.getElementById("cfg-repo").value.trim();
     const branch = document.getElementById("cfg-branch").value.trim() || "main";
     const token = document.getElementById("cfg-token").value.trim();
-    localStorage.setItem(CONFIG_KEY, JSON.stringify({ owner, repo, branch }));
-    if (token) localStorage.setItem(TOKEN_KEY, token);
-    status.textContent = `保存しました（${owner}/${repo} @ ${branch}）`;
+    const okCfg = rememberSetting(CONFIG_KEY, JSON.stringify({ owner, repo, branch }));
+    const okToken = token ? rememberSetting(TOKEN_KEY, token) : true;
+
+    // 書けていないのに「保存しました」と出すと、次に開いて消えている理由が分からない
+    status.textContent =
+      okCfg && okToken ? `保存しました（${owner}/${repo} @ ${branch}）` : STORAGE_WARNING;
   });
 
   document.getElementById("cfg-clear").addEventListener("click", () => {
