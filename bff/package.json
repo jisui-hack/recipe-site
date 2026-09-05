@@ -13,7 +13,8 @@
     "setup": "./scripts/setup.sh",
     "smoke": "./scripts/smoke.sh",
     "pretest": "node scripts/check-node-modules.mjs",
-    "check:env": "node scripts/check-node-modules.mjs"
+    "check:env": "node scripts/check-node-modules.mjs",
+    "predeploy": "node scripts/predeploy.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.70.0"
