@@ -633,3 +633,20 @@ ol.steps li { margin-bottom: 8px; }
   .edit-search input { min-height: 44px; }
   .edit-item { padding-block: .75rem; }
 }
+
+/* どちらの保存領域で開いているか。ここを取り違えると
+   「アプリから開いたら設定が消えた」に見える */
+.storage-context {
+  margin: .6rem 0 .9rem;
+  padding: .55rem .8rem;
+  border-radius: 4px;
+  font-size: .88rem;
+  line-height: 1.6;
+  background: var(--warn-weak);
+  color: var(--fg);
+  border-left: 3px solid var(--warn);
+}
+.storage-context[data-standalone="true"] {
+  background: var(--accent-weak);
+  border-left-color: var(--accent);
+}
