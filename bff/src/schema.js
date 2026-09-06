@@ -42,4 +42,4 @@ export function clampConfidence(level, max) {
 export const SCHEMA_VERSION = 1;
 
 /** プロンプト・ツール定義を変えたら必ず上げる。ログとキャッシュキーに入る */
-export const PROMPT_VERSION = "2026-08-30.1";
+export const PROMPT_VERSION = "2026-09-06.1";
