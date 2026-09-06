@@ -16,6 +16,20 @@
     ]
   },
   {
+    "id": "2026-0010-0xl0",
+    "title": "ピーマンとちくわのマヨソテー",
+    "thumb": "data/images/2026-0010-0xl0.jpg",
+    "timeMinutes": 10,
+    "createdAt": "2026-09-06",
+    "protein": [],
+    "plant": [
+      "ピーマン"
+    ],
+    "genre": [
+      "和風"
+    ]
+  },
+  {
     "id": "2026-0008-p0qr",
     "title": "ゴーヤの鶏そぼろ",
     "thumb": "data/images/2026-0008-p0qr.jpg",
