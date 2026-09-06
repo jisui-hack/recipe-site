@@ -21,7 +21,7 @@ const MAX = {
   step: 120,
   notes: 300,
   rationale: 400,
-  // プロンプトの指示は145文字。ここは暴走を止める最後の砦なので少し余裕を持たせる
+  // プロンプトの指示は130文字。ここは暴走を止める最後の砦なので少し余裕を持たせる
   // （125ちょうどで切ると、わずかに超えただけの文が途中で千切れる）
   xPost: 170,
   followUpMessage: 100,
@@ -121,6 +121,29 @@ function clipConfidence(conf, { inputKinds, ingredients, imageKind }) {
  * URL を書かないよう指示してあるが、書いてきた場合は落とす。
  * 投稿時にこちらで正しい URL を付けるので、モデルが作った URL は害にしかならない。
  */
+/**
+ * 投稿文の先頭にレシピのタイトルを置く。
+ *
+ * **モデルに書かせない。** 書かせると表記がぶれる（「ドライカレー」と
+ * 「豚ひき肉となすのドライカレー」が混ざる）うえ、紹介文でも料理名を
+ * 繰り返して二重になる。こちらで付ければ必ずレシピと一致する。
+ *
+ * それでも先頭に書いてきた場合は、そちらを捨てて付け直す。
+ */
+export function composeXPost(title, body) {
+  const clean = trim(body);
+  if (!clean) return "";
+  if (!title) return clean;
+
+  const lines = clean.split("\n");
+  // モデルがタイトルを書いていたら落とす。空行が続いていればそれも
+  if (trim(lines[0]) === title) {
+    lines.shift();
+    while (lines.length && !trim(lines[0])) lines.shift();
+  }
+  return `${title}\n\n${lines.join("\n")}`.trim();
+}
+
 export function normalizeXPost(raw) {
   let s = trim(raw);
   if (!s) return "";
@@ -270,7 +293,7 @@ export function normalizeDraft(raw, ctx) {
   const rationale = [cut(raw.rationale, MAX.rationale), ...notes].filter(Boolean).join(" ");
 
   /* X の紹介文。レシピの一部ではないので draft の外に置く */
-  const xPost = normalizeXPost(cut(raw.xPost, MAX.xPost));
+  const xPost = composeXPost(title, normalizeXPost(cut(raw.xPost, MAX.xPost)));
 
   return {
     schemaVersion: SCHEMA_VERSION,

@@ -195,25 +195,35 @@ describe("normalizeDraft", () => {
   });
 });
 
-describe("X の紹介文（xPost）", () => {
-  it("そのまま通す", () => {
-    const body = "ごぼうは煮物と相性がいい。豚肉と水だけで煮て、醤油とみりんで味付け。15分ほどで作れる。";
-    const out = normalizeDraft(rawDraft({ xPost: body }), ctx());
-    expect(out.xPost).toBe(body);
+describe("X の投稿文（xPost）", () => {
+  const TITLE = "豚バラ白菜のミルフィーユ蒸し";
+
+  /** 先頭のタイトルを外した本文だけを見たいとき */
+  const bodyOf = (xPost) => xPost.split("\n\n").slice(1).join("\n\n");
+
+  it("先頭にレシピのタイトルが付く", () => {
+    const out = normalizeDraft(rawDraft({ xPost: "ごぼうは煮物に向く。" }), ctx());
+    expect(out.xPost).toBe(`${TITLE}\n\nごぼうは煮物に向く。`);
   });
 
-  it("モデルが URL を書いてきたら落とす（正しい URL は投稿時に付ける）", () => {
+  it("モデルがタイトルを書いてきたら二重にしない", () => {
+    // 表記がぶれるのでモデルには書かせない。書いてきたら捨てて付け直す
     const out = normalizeDraft(
-      rawDraft({ xPost: "10分でできる https://cookpad.com/recipe/123" }),
+      rawDraft({ xPost: `${TITLE}\n\nごぼうは煮物に向く。` }),
       ctx()
     );
-    expect(out.xPost).not.toContain("http");
-    expect(out.xPost).toContain("10分でできる");
+    expect(out.xPost).toBe(`${TITLE}\n\nごぼうは煮物に向く。`);
+    expect(out.xPost.split(TITLE)).toHaveLength(2); // 1回だけ
+  });
+
+  it("本文が空ならタイトルも付けない", () => {
+    expect(normalizeDraft(rawDraft({ xPost: "" }), ctx()).xPost).toBe("");
+    expect(normalizeDraft(rawDraft({ xPost: undefined }), ctx()).xPost).toBe("");
   });
 
   it("改行を保つ（レシピの形をそのまま出すため）", () => {
     const body = [
-      "豚ひき肉は炒め料理を基本に考える。おすすめはドライカレー。",
+      "豚ひき肉は炒め料理を基本に考えるといい。",
       "",
       "【材料】2人分",
       "豚ひき肉 200g",
@@ -225,40 +235,66 @@ describe("X の紹介文（xPost）", () => {
     ].join("\n");
     const out = normalizeDraft(rawDraft({ xPost: body }), ctx());
 
-    expect(out.xPost).toBe(body);
-    expect(out.xPost.split("\n")).toHaveLength(9);
+    expect(bodyOf(out.xPost)).toBe(body.split("\n\n").join("\n\n"));
+    expect(out.xPost.startsWith(`${TITLE}\n\n`)).toBe(true);
+    expect(out.xPost.split("\n")).toHaveLength(11); // タイトル + 空行 + 本文9行
+  });
+
+  it("モデルが URL を書いてきたら落とす（正しい URL は投稿時に付ける）", () => {
+    const out = normalizeDraft(
+      rawDraft({ xPost: "10分でできる https://cookpad.com/recipe/123" }),
+      ctx()
+    );
+    expect(out.xPost).not.toContain("http");
+    expect(out.xPost).toContain("10分でできる");
   });
 
   it("空行が3行以上続いたら2行にまとめる", () => {
     const out = normalizeDraft(rawDraft({ xPost: "紹介文。\n\n\n\n【材料】2人分\nなす 2本" }), ctx());
-    expect(out.xPost).toBe("紹介文。\n\n【材料】2人分\nなす 2本");
+    expect(bodyOf(out.xPost)).toBe("紹介文。\n\n【材料】2人分\nなす 2本");
   });
 
   it("ハッシュタグは落とす（プロンプトで禁じても書いてくるため）", () => {
     const out = normalizeDraft(
-      rawDraft({ xPost: "ごぼうは煮物と相性がいい。15分ほどで作れる。#自炊ハック #作り置き" }),
+      rawDraft({ xPost: "ごぼうは煮物に向く。15分ほどで作れる。#自炊ハック #作り置き" }),
       ctx()
     );
     expect(out.xPost).not.toContain("#");
-    expect(out.xPost).toBe("ごぼうは煮物と相性がいい。15分ほどで作れる。");
+    expect(bodyOf(out.xPost)).toBe("ごぼうは煮物に向く。15分ほどで作れる。");
   });
 
   it("全角のハッシュタグも落とす", () => {
     const out = normalizeDraft(rawDraft({ xPost: "15分で作れる。＃自炊ハック" }), ctx());
-    expect(out.xPost).toBe("15分で作れる。");
+    expect(bodyOf(out.xPost)).toBe("15分で作れる。");
   });
 
-  it("長すぎたら切り詰める", () => {
+  it("長すぎたら切り詰める（タイトルは別勘定）", () => {
     const out = normalizeDraft(rawDraft({ xPost: "あ".repeat(300) }), ctx());
-    expect(out.xPost.length).toBeLessThanOrEqual(170);
+    expect(bodyOf(out.xPost).length).toBeLessThanOrEqual(170);
   });
 
-  it("無くても落ちない", () => {
-    expect(normalizeDraft(rawDraft({ xPost: undefined }), ctx()).xPost).toBe("");
-  });
-
-  it("レシピ本体（draft）には入れない", () => {
-    const out = normalizeDraft(rawDraft({ xPost: "本文" }), ctx());
-    expect(out.draft.xPost).toBeUndefined();
+  it("X の重みで 280 に収まる（実際に出る形で確かめる）", () => {
+    const out = normalizeDraft(
+      rawDraft({
+        xPost: [
+          "豚ひき肉は炒め料理を基本に考えるといい。",
+          "",
+          "【材料】2人分",
+          "豚ひき肉 200g",
+          "玉ねぎ 1/2個",
+          "なす 2本",
+          "カレー粉 大さじ1",
+          "",
+          "【作り方】",
+          "1 なすを素揚げする",
+          "2 ひき肉と玉ねぎを炒める",
+          "3 カレー粉とルーで味付け",
+          "4 水分を飛ばす",
+        ].join("\n"),
+      }),
+      ctx()
+    );
+    const weighted = [...out.xPost].reduce((n, c) => n + (c.codePointAt(0) < 0x1100 ? 1 : 2), 0);
+    expect(weighted).toBeLessThanOrEqual(280);
   });
 });
