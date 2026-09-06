@@ -41,6 +41,7 @@
       共有ボタン → 「ホーム画面に追加」で入れたアイコンから開けば消えません。
       Fine-grained PAT を、このリポジトリだけに絞り、権限は Contents: Read and write のみで発行してください。
     </p>
+    <p class="storage-context" id="storage-context"></p>
     <div class="field">
       <label for="cfg-owner">オーナー（ユーザー名/Organization）</label>
       <input id="cfg-owner" type="text" autocomplete="off" placeholder="your-name">
@@ -155,6 +156,7 @@
         キーはこのブラウザの localStorage にだけ保存されます。
         GitHub のトークンとは別のもので、漏れても書き込みはされません。
       </p>
+      <p class="storage-context" id="ai-storage-context"></p>
       <div class="field">
         <label for="ai-cfg-endpoint">BFF のエンドポイント URL</label>
         <input id="ai-cfg-endpoint" type="url" autocomplete="off" inputmode="url">

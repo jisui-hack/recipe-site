@@ -134,3 +134,24 @@ export function storageWorks() {
 export const STORAGE_WARNING =
   "この画面では設定を保存できません。プライベートブラウズか、" +
   "アプリ内ブラウザで開いている可能性があります。Safari や Chrome で開き直してください。";
+
+/**
+ * いまどちらで開いているかを一言で返す。
+ *
+ * **ホーム画面に追加したアプリは、Safari とは別の保存領域を持つ。**
+ * 同じ URL でも設定は共有されない。これを知らないと
+ * 「アプリから開いたら設定が消えた」と見える（実際に踏んだ）。
+ * どちらにいるのかを画面に出して、入れ直しが必要な理由を分かるようにする。
+ */
+export function standaloneApp() {
+  return (
+    window.navigator.standalone === true ||
+    window.matchMedia?.("(display-mode: standalone)").matches === true
+  );
+}
+
+export function storageContextNote() {
+  return standaloneApp()
+    ? "ホーム画面のアプリとして開いています。設定はここに保存され、消えません。"
+    : "ブラウザで開いています。ホーム画面に追加したアプリとは設定が別々です（同じ URL でも共有されません）。";
+}

@@ -1,6 +1,6 @@
 /* 投稿フォーム → GitHub Contents API 直コミット */
 
-import { STORAGE_WARNING, byNewest, el, rememberSetting, storageWorks } from "./common.js";
+import { STORAGE_WARNING, byNewest, el, rememberSetting, standaloneApp, storageContextNote } from "./common.js";
 import { renderRecipe } from "./recipe.js";
 import { TAG_GROUPS } from "./tags.js";
 
@@ -32,7 +32,15 @@ function loadConfig() {
   };
 }
 
+function showStorageContext(id) {
+  const box = document.getElementById(id);
+  if (!box) return;
+  box.textContent = storageContextNote();
+  box.dataset.standalone = String(standaloneApp());
+}
+
 function initSettings() {
+  showStorageContext("storage-context");
   const cfg = loadConfig();
   document.getElementById("cfg-owner").value = cfg.owner;
   document.getElementById("cfg-repo").value = cfg.repo;

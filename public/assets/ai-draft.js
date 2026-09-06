@@ -15,7 +15,7 @@ import {
   restoreForm,
   snapshotForm,
 } from "./ai-mapper.js";
-import { STORAGE_WARNING, el, rememberSetting } from "./common.js";
+import { STORAGE_WARNING, el, rememberSetting, standaloneApp, storageContextNote } from "./common.js";
 import { initIllustrate, refreshIllustrateMode, setSourcePhoto } from "./illustrate.js";
 import { clearXPost, initXPost, showXPost } from "./x-post.js";
 import { TAG_GROUPS } from "./tags.js";
@@ -67,6 +67,12 @@ function syncConfiguredState() {
 }
 
 function initAiSettings() {
+  const ctx = document.getElementById("ai-storage-context");
+  if (ctx) {
+    ctx.textContent = storageContextNote();
+    ctx.dataset.standalone = String(standaloneApp());
+  }
+
   const box = document.getElementById("ai-settings");
   const epInput = document.getElementById("ai-cfg-endpoint");
   const keyInput = document.getElementById("ai-cfg-key");

@@ -429,3 +429,40 @@ describe("設定が保存できない端末", () => {
     expect(localStorage.getItem("ai_bff_key")).toBe(KEY);
   });
 });
+
+describe("どちらの保存領域か", () => {
+  /*
+   * **ホーム画面のアプリと Safari は別の保存領域を持つ。**
+   * 同じ URL でも設定は共有されない。これを知らないと
+   * 「アプリから開いたら設定が消えた」と見える。実際に踏んだ。
+   */
+  async function boot() {
+    document.body.innerHTML = BODY;
+    localStorage.clear();
+    vi.resetModules();
+    await import("../../public/assets/add.js");
+    await import("../../public/assets/ai-draft.js");
+  }
+
+  afterEach(() => {
+    delete window.navigator.standalone;
+    vi.restoreAllMocks();
+  });
+
+  it("ブラウザで開いていると、設定が別々だと伝える", async () => {
+    await boot();
+    for (const id of ["storage-context", "ai-storage-context"]) {
+      expect($(id).textContent).toContain("別々");
+      expect($(id).dataset.standalone).toBe("false");
+    }
+  });
+
+  it("ホーム画面のアプリなら、消えないと伝える", async () => {
+    Object.defineProperty(window.navigator, "standalone", { value: true, configurable: true });
+    await boot();
+    for (const id of ["storage-context", "ai-storage-context"]) {
+      expect($(id).textContent).toContain("消えません");
+      expect($(id).dataset.standalone).toBe("true");
+    }
+  });
+});
