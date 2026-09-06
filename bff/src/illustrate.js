@@ -72,8 +72,18 @@ const SEASONINGS = [
   "片栗粉", "小麦粉",
 ];
 
+/**
+ * 末尾で見るもの。
+ * 「オリーブオイル」「ごま油」「カレールー」を落としたいが、
+ * 部分一致だと「オイルサーディン」「ブルーベリー」まで巻き込む。
+ */
+const SEASONING_SUFFIX = ["油", "オイル", "ルー", "ルウ"];
+
 function isSeasoning(name) {
-  return SEASONINGS.some((s) => name.includes(s));
+  return (
+    SEASONINGS.some((s) => name.includes(s)) ||
+    SEASONING_SUFFIX.some((s) => name.endsWith(s))
+  );
 }
 
 function isIgnored(name) {
@@ -119,16 +129,33 @@ export function splitIngredients(ingredients) {
 const CUT_WORDS = /(切り|切る|そぎ|ささがき|みじん|千切|細切|薄切|ざく切|乱切|輪切|くし形|ちぎ|すりおろ|おろす)/;
 
 /**
- * **文単位で拾う。** 手順1行には切り方のあとに別の話が続くことが多い
+ * 「切る」が食材の形と関係ない使われ方。ここを拾うと絵に効かないどころか、
+ * 「水気を切る」から水分の表現を足しにいく。実データで踏んだ。
+ */
+const NOT_CUT = /(水気|水分|湯|油|粗熱)を?切/;
+
+/**
+ * **文単位で拾い、さらに節で刈り込む。**
+ *
+ * 手順1行には切り方のあとに別の話が続く
  * （「ごぼうを薄めの細切りにする。冷凍ごぼうがあれば代用してもよい。」）。
- * 行ごと渡すと、関係ない文まで絵の材料にしてしまう。
+ * 前にも付く（「火が通ったら、ざく切りにしたゴーヤを加える。」）。
+ * 括弧の補足も混ざる。どれも渡すと、関係ない話まで絵の材料にしてしまう。
  */
 export function cutHints(steps, max = 2) {
   const hits = [];
+
   for (const step of steps ?? []) {
-    for (const sentence of String(step ?? "").split(/(?<=。)/)) {
-      const t = sentence.trim();
-      if (t && CUT_WORDS.test(t)) hits.push(t);
+    for (const raw of String(step ?? "").split(/(?<=。)/)) {
+      // 括弧の中は代替案や補足。形の指定ではない
+      const sentence = raw.replace(/（[^）]*）/g, "").replace(/\([^)]*\)/g, "").trim();
+      if (!sentence || !CUT_WORDS.test(sentence) || NOT_CUT.test(sentence)) continue;
+
+      // 切る話が始まる節から後ろだけ残す
+      const clauses = sentence.split("、");
+      const from = clauses.findIndex((c) => CUT_WORDS.test(c));
+      hits.push(clauses.slice(from).join("、").trim());
+
       if (hits.length >= max) return hits;
     }
   }
@@ -168,7 +195,7 @@ ${STYLE_SPEC}`;
 
 
 /** イラスト用のプロンプト版。上の文を変えたら必ず上げる */
-export const ILLUSTRATE_PROMPT_VERSION = "2026-08-30.1";
+export const ILLUSTRATE_PROMPT_VERSION = "2026-09-06.1";
 
 /**
  * 使うモデル。2026-08-20 に Gemini API のモデル一覧で確認済み。

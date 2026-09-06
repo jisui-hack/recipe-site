@@ -397,6 +397,53 @@ describe("レシピから描き起こす（写真が無いとき）", () => {
     expect(r).not.toContain("冷凍ごぼう");
   });
 
+  it("油とルーは具材にしない（末尾で見る。部分一致だと巻き込む）", async () => {
+    const { buildRecipePrompt } = await import("../src/illustrate.js");
+    const r = buildRecipePrompt({
+      title: "カレー",
+      ingredients: [
+        { name: "玉ねぎ" },
+        { name: "オリーブオイル", amount: "適量" },
+        { name: "カレールー", amount: "1/3" },
+        { name: "オイルサーディン" }, // これは具材。落としてはいけない
+      ],
+    });
+    expect(r).toContain("【皿に見える具材】\n玉ねぎ\nオイルサーディン");
+    expect(r).toContain("【味つけ】\nオリーブオイル、カレールー");
+  });
+
+  it("「水気を切る」は切り方ではない", async () => {
+    const { buildRecipePrompt } = await import("../src/illustrate.js");
+    const r = buildRecipePrompt({
+      title: "えびと卵の炒め",
+      ingredients: [{ name: "むき海老" }],
+      steps: ["水気が多い場合はざるに上げて水気を切る。"],
+    });
+    // 拾うと、絵に効かないどころか水分の表現を足しにいく
+    expect(r).not.toContain("【切り方】");
+  });
+
+  it("切る話が始まる節から拾う（前置きを持ち込まない）", async () => {
+    const { buildRecipePrompt } = await import("../src/illustrate.js");
+    const r = buildRecipePrompt({
+      title: "ゴーヤの鶏そぼろ",
+      ingredients: [{ name: "ゴーヤ" }],
+      steps: ["火が通ったら、ざく切りにしたゴーヤを加える。"],
+    });
+    expect(r).toContain("【切り方】\nざく切りにしたゴーヤを加える。");
+    expect(r).not.toContain("火が通ったら");
+  });
+
+  it("括弧の補足は落とす（代替案は形の指定ではない）", async () => {
+    const { buildRecipePrompt } = await import("../src/illustrate.js");
+    const r = buildRecipePrompt({
+      title: "なすカレー",
+      ingredients: [{ name: "なす" }],
+      steps: ["冷凍の揚げなすを加える（生のなすの場合は細かめのざく切りにして加える）。"],
+    });
+    expect(r).not.toContain("生のなすの場合");
+  });
+
   it("切る話が無ければ切り方の欄を出さない", async () => {
     const { buildRecipePrompt } = await import("../src/illustrate.js");
     const r = buildRecipePrompt({
