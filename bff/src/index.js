@@ -11,7 +11,7 @@ import { callAnthropic, DEADLINE_MS, extractToolInput, UpstreamError } from "./a
 import { hashVocabulary, sha256Hex, shortHash } from "./hash.js";
 import { err, isAllowedOrigin, ok, preflight, timingSafeEqual } from "./http.js";
 import { normalizeDraft } from "./normalize.js";
-import { buildMessages, buildTool } from "./prompt.js";
+import { buildMessages, buildSystemPrompt, buildTool } from "./prompt.js";
 import { consumeImageQuota, consumeRateLimit } from "./ratelimit.js";
 import { PROMPT_VERSION } from "./schema.js";
 import {
@@ -39,14 +39,23 @@ async function buildCacheKey(body, env) {
   const imageHash = body.image ? await shortHash(body.image.base64, 16) : "-";
   const vocabHash = await hashVocabulary(body.vocabulary);
   const model = env.MODEL || "claude-sonnet-5";
-  const knobs = `${env.THINKING || "disabled"}/${env.EFFORT || "low"}`;
+  const knobs = `${env.THINKING || "disabled"}/${env.EFFORT || "low"}/x=${xPostEnabled(env) ? 1 : 0}`;
   const raw = [body.memo, imageHash, vocabHash, PROMPT_VERSION, model, knobs].join("|");
   return `draft:${(await sha256Hex(raw)).slice(0, 32)}`;
+}
+
+/**
+ * X の投稿文を作らせるか。wrangler.toml の X_POST_ENABLED。
+ * "false" のときだけ切る（未設定は作る。古い設定でも動きが変わらないように）。
+ */
+function xPostEnabled(env) {
+  return env.X_POST_ENABLED !== "false";
 }
 
 async function handleDraft(request, env, ctx, { requestId, origin }) {
   const startedAt = Date.now();
   const deadlineAt = startedAt + DEADLINE_MS;
+  const xPost = xPostEnabled(env);
 
   let body;
   try {
@@ -95,7 +104,8 @@ async function handleDraft(request, env, ctx, { requestId, origin }) {
   let message;
   try {
     message = await callAnthropic(env, {
-      tool: buildTool(body.vocabulary),
+      tool: buildTool(body.vocabulary, { xPost }),
+      system: buildSystemPrompt({ xPost }),
       messages: buildMessages(body),
       deadlineAt,
     });
@@ -144,6 +154,8 @@ async function handleDraft(request, env, ctx, { requestId, origin }) {
       promptVersion: PROMPT_VERSION,
     },
   });
+  // X を切っている期間は、万一モデルが書いてきても表に出さない
+  if (!xPost) payload.xPost = "";
 
   if (!payload) {
     log({ requestId, event: "draft.extraction_failed", reason: "empty_after_normalize" });
@@ -364,6 +376,7 @@ export default {
           model: env.MODEL || "claude-sonnet-5",
           hasApiKey: Boolean(env.ANTHROPIC_API_KEY),
           hasGeminiKey: Boolean(env.GEMINI_API_KEY),
+          xPost: xPostEnabled(env),
         },
         origin
       );

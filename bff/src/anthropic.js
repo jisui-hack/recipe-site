@@ -42,7 +42,7 @@ function isRetryable(err) {
  * @param {object} env Worker の環境変数
  * @param {{ tool: object, messages: object[], deadlineAt: number }} args
  */
-export async function callAnthropic(env, { tool, messages, deadlineAt }) {
+export async function callAnthropic(env, { tool, messages, deadlineAt, system = SYSTEM_PROMPT }) {
   const client = new Anthropic({
     apiKey: env.ANTHROPIC_API_KEY,
     maxRetries: 0, // リトライは自前で予算管理する
@@ -58,7 +58,7 @@ export async function callAnthropic(env, { tool, messages, deadlineAt }) {
     system: [
       {
         type: "text",
-        text: SYSTEM_PROMPT,
+        text: system,
         // tools → system の順にレンダリングされるので、ここに置くと
         // ツール定義ごとキャッシュされる（同一メモの作り直しや連投で効く）
         cache_control: { type: "ephemeral" },
