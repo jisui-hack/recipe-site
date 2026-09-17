@@ -638,3 +638,79 @@ describe("画像入力", () => {
     }
   });
 });
+
+describe("X の投稿文を切る（X_POST_ENABLED）", () => {
+  /*
+   * レシピの蓄積に集中する期間、X の投稿文を作らない。
+   * **切るのは出力だけでなく、プロンプトとツール定義も。**
+   * 定義に残すとモデルは required でなくても埋めにくるので、トークンが減らない。
+   * いつでも "true" に戻せることも固定する。
+   */
+  const off = () => makeEnv({ X_POST_ENABLED: "false" });
+
+  /** ツール入力に xPost を入れた応答 */
+  function withXPost(text) {
+    const msg = goodMessage();
+    msg.content[0].input = { ...msg.content[0].input, xPost: text };
+    return msg;
+  }
+
+  it("プロンプトから X の節が消える", async () => {
+    createMock.mockResolvedValue(goodMessage());
+    await worker.fetch(draftRequest(), off(), ctx);
+
+    const params = createMock.mock.calls.at(-1)[0];
+    const system = params.system.map((b) => b.text).join("\n");
+    expect(system).not.toContain("## X（旧Twitter）");
+    expect(system).toContain("## 写真がある場合"); // 他の節は残る
+  });
+
+  it("ツール定義から xPost が消える", async () => {
+    createMock.mockResolvedValue(goodMessage());
+    await worker.fetch(draftRequest(), off(), ctx);
+
+    const schema = createMock.mock.calls.at(-1)[0].tools[0].input_schema;
+    expect(schema.properties.xPost).toBeUndefined();
+    expect(schema.required).not.toContain("xPost");
+    expect(schema.required).toContain("title"); // 他は残る
+  });
+
+  it("モデルが書いてきても表に出さない", async () => {
+    createMock.mockResolvedValue(withXPost("勝手に書いた投稿文"));
+    const res = await worker.fetch(draftRequest(), off(), ctx);
+    const payload = await res.json();
+    expect(payload.xPost).toBe("");
+  });
+
+  it("切り替えの前後でキャッシュを共有しない", async () => {
+    createMock.mockResolvedValue(withXPost("投稿文あり"));
+    const kv = fakeKV();
+
+    const on = await (await worker.fetch(draftRequest(), makeEnv({ KV: kv }), ctx)).json();
+    expect(on.xPost).not.toBe("");
+
+    // 同じ KV・同じメモで切り替える。古い応答（X あり）を返してはいけない
+    const after = await (await worker.fetch(draftRequest(), makeEnv({ KV: kv, X_POST_ENABLED: "false" }), ctx)).json();
+    expect(after.xPost).toBe("");
+    expect(after.meta?.cached).not.toBe(true);
+  });
+
+  it("未設定なら今までどおり作る（古い設定を壊さない）", async () => {
+    createMock.mockResolvedValue(withXPost("投稿文あり"));
+    const res = await worker.fetch(draftRequest(), makeEnv(), ctx);
+    const payload = await res.json();
+    expect(payload.xPost).toContain("投稿文あり");
+
+    const schema = createMock.mock.calls.at(-1)[0].tools[0].input_schema;
+    expect(schema.properties.xPost).toBeDefined();
+  });
+
+  it("health で切れていることが分かる", async () => {
+    const res = await worker.fetch(
+      new Request("https://bff.example.dev/v1/health", { headers: { Origin: ORIGIN } }),
+      off(),
+      ctx
+    );
+    expect((await res.json()).xPost).toBe(false);
+  });
+});

@@ -4,7 +4,7 @@ import { SCALAR_FIELDS, LIST_FIELDS, AMOUNT_FIELD, IMAGE_KINDS } from "./schema.
 
 export const TOOL_NAME = "emit_recipe_draft";
 
-export const SYSTEM_PROMPT = `あなたは家庭料理のレシピ整理を手伝うアシスタントです。
+const BASE_PROMPT = `あなたは家庭料理のレシピ整理を手伝うアシスタントです。
 利用者の断片的なメモや料理写真から、レシピ投稿フォームに入れる下書きを作ります。
 
 ## 最優先の原則
@@ -29,7 +29,30 @@ export const SYSTEM_PROMPT = `あなたは家庭料理のレシピ整理を手�
   例:「煮汁は少なめが好み。」「野菜は家にあるもので置き換え可。」
   メモの丸写しはしない。書くことがなければ空文字。
 
-## X（旧Twitter）の紹介文
+## 写真がある場合
+- imageKind に写真の種類を入れる。
+  - dish: できあがった料理そのものの写真
+  - handwritten_note: 紙のメモ・レシピ本・画面など、文字を読み取る対象
+  - other: どちらとも言えない
+- handwritten_note のときは、写真に写っている文字を読み取ってレシピを組み立てる。
+  料理の見た目を推測しない。
+
+## 曖昧なときの判断
+- 所要時間がメモにない → 手順数と調理法から常識的に推定してよい
+  （煮込みなら長め、炒めものなら短め）。confidence は medium。
+  推定の根拠すら無い場合は null にして followUps に入れる。
+- 人数がメモにない → null。フォームが 1 を補います。推定しない。
+- 分量がメモにない → amount は空文字。confidence.ingredientAmounts は low。
+- ジャンルが判断できない → 空配列。無理に「和風」に寄せない。`;
+
+/**
+ * X の投稿文を作らせる節。**いまは切ってある**（wrangler.toml の X_POST_ENABLED）。
+ *
+ * レシピの蓄積に集中する期間、ここぶんの出力トークンを節約するため。
+ * 節そのものは残しているので、X_POST_ENABLED を "true" に戻せば
+ * プロンプト・ツール定義・整形のすべてが元に戻る。消してはいけない。
+ */
+export const X_POST_SECTION = `## X（旧Twitter）の紹介文
 - xPost に、このレシピを X に投稿する文を書く。
 - **タイトルは書かない。** こちらが先頭に付ける。書くと二重になる。
 - **改行を含めて130文字以内。**
@@ -89,23 +112,20 @@ export const SYSTEM_PROMPT = `あなたは家庭料理のレシピ整理を手�
   - 比喩・ジョーク・脱線を入れない。
 - **飾った動詞を使わない。**「締める」ではなく「味を整える」。「香る」ではなく「合う」。
 - 「作り置きおかず」「時短メニュー」のような分類語でまとめない。
-- 数字をでっち上げない。人数が分からなければ「【材料】」だけにする。
+- 数字をでっち上げない。人数が分からなければ「【材料】」だけにする。`;
 
-## 写真がある場合
-- imageKind に写真の種類を入れる。
-  - dish: できあがった料理そのものの写真
-  - handwritten_note: 紙のメモ・レシピ本・画面など、文字を読み取る対象
-  - other: どちらとも言えない
-- handwritten_note のときは、写真に写っている文字を読み取ってレシピを組み立てる。
-  料理の見た目を推測しない。
+/**
+ * システムプロンプトを組み立てる。
+ * X の節は「## 写真がある場合」の直前に入る（元の並びと同じ）。
+ */
+export function buildSystemPrompt({ xPost = true } = {}) {
+  if (!xPost) return BASE_PROMPT;
+  const at = BASE_PROMPT.indexOf("## 写真がある場合");
+  return BASE_PROMPT.slice(0, at) + X_POST_SECTION + "\n\n" + BASE_PROMPT.slice(at);
+}
 
-## 曖昧なときの判断
-- 所要時間がメモにない → 手順数と調理法から常識的に推定してよい
-  （煮込みなら長め、炒めものなら短め）。confidence は medium。
-  推定の根拠すら無い場合は null にして followUps に入れる。
-- 人数がメモにない → null。フォームが 1 を補います。推定しない。
-- 分量がメモにない → amount は空文字。confidence.ingredientAmounts は low。
-- ジャンルが判断できない → 空配列。無理に「和風」に寄せない。`;
+/** 互換のため。X ありの完全版 */
+export const SYSTEM_PROMPT = buildSystemPrompt({ xPost: true });
 
 /** confidence オブジェクトの properties を組み立てる */
 function confidenceProperties() {
@@ -125,7 +145,7 @@ function confidenceProperties() {
  *
  * @param {Record<string, string[]>} vocabulary
  */
-export function buildTool(vocabulary) {
+export function buildTool(vocabulary, { xPost = true } = {}) {
   const group = (key, max, description) => ({
     type: "array",
     maxItems: max,
@@ -135,7 +155,7 @@ export function buildTool(vocabulary) {
 
   const conf = confidenceProperties();
 
-  return {
+  const tool = {
     name: TOOL_NAME,
     description: "メモや写真から読み取ったレシピ情報を、投稿フォームに入れられる形で出力する。",
     input_schema: {
@@ -266,6 +286,14 @@ export function buildTool(vocabulary) {
       ],
     },
   };
+
+  // X の投稿文を切っている期間は、出力させないだけでなく定義からも外す。
+  // 定義に残すと、モデルは required でなくても埋めにくる（トークンが減らない）
+  if (!xPost) {
+    delete tool.input_schema.properties.xPost;
+    tool.input_schema.required = tool.input_schema.required.filter((k) => k !== "xPost");
+  }
+  return tool;
 }
 
 /**

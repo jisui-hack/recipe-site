@@ -7,6 +7,13 @@ compatibility_flags = ["nodejs_compat"]
 # 許可する接続元。カンマ区切り・完全一致。ワイルドカードは使わない
 ALLOWED_ORIGINS = "https://jisui-hack.github.io,http://localhost:3000,http://localhost:8788"
 
+# X の投稿文を下書きと一緒に作るか。
+# 2026-09-17 に "false" にした。レシピの蓄積に集中する期間、
+# 出力トークンとプロンプトの長さ（約半分）を節約するため。
+# "true" に戻して deploy すれば、プロンプト・ツール定義・整形が丸ごと元に戻る。
+# コードは消していない。
+X_POST_ENABLED = "false"
+
 MODEL = "claude-sonnet-5"
 MAX_TOKENS = "2048"
 
