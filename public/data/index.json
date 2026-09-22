@@ -49,6 +49,20 @@
     ]
   },
   {
+    "id": "2026-0015-ebjx",
+    "title": "豚ロースのわさび焼き",
+    "thumb": null,
+    "timeMinutes": 10,
+    "createdAt": "2026-09-22",
+    "protein": [
+      "豚肉"
+    ],
+    "plant": [],
+    "genre": [
+      "和風"
+    ]
+  },
+  {
     "id": "2026-0011-ihrh",
     "title": "豚こまとトマトピーマンの中華炒め",
     "thumb": "data/images/2026-0011-ihrh.jpg",
