@@ -30,6 +30,29 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@jisui_hack">
 <meta name="theme-color" content="#2c6e4f">
+<!-- キャッシュの新旧混在を防ぐ。デプロイ時に site.yml が __BUILD__ を実行番号に置き換えるので、
+     JS を1つでも更新すると全モジュールの URL が変わり、古い common.js と新しい app.js が
+     組み合わさって「読み込み中」で止まる事故が起きない。importmap 非対応のブラウザでは無視され、今まで通り動く。 -->
+<script type="importmap">{"imports":{"./assets/add.js":"./assets/add.js?v=__BUILD__","./assets/ai-draft.js":"./assets/ai-draft.js?v=__BUILD__","./assets/ai-mapper.js":"./assets/ai-mapper.js?v=__BUILD__","./assets/app.js":"./assets/app.js?v=__BUILD__","./assets/common.js":"./assets/common.js?v=__BUILD__","./assets/edit.js":"./assets/edit.js?v=__BUILD__","./assets/illustrate.js":"./assets/illustrate.js?v=__BUILD__","./assets/recipe.js":"./assets/recipe.js?v=__BUILD__","./assets/search.js":"./assets/search.js?v=__BUILD__","./assets/tags.js":"./assets/tags.js?v=__BUILD__","./assets/x-post.js":"./assets/x-post.js?v=__BUILD__"}}</script>
+<script>
+(function () {
+  var shown = false;
+  function fail() {
+    if (shown) return;
+    var s = document.getElementById("status");
+    if (!s || s.hidden || s.textContent.indexOf("読み込み中") !== 0) return;
+    shown = true;
+    s.textContent = "読み込みに失敗しました。";
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "btn"; b.style.marginLeft = "10px"; b.textContent = "再読み込み";
+    b.onclick = function () { location.reload(); };
+    s.appendChild(b);
+  }
+  window.addEventListener("error", fail);
+  window.addEventListener("unhandledrejection", fail);
+  setTimeout(fail, 8000);
+})();
+</script>
 </head>
 <body>
 <header class="site-header">
@@ -48,6 +71,6 @@
   <a class="back-link" href="search.html">← 材料から探す</a>
 </main>
 
-<script type="module" src="assets/recipe.js"></script>
+<script type="module" src="assets/recipe.js?v=__BUILD__"></script>
 </body>
 </html>

@@ -66,6 +66,11 @@ jobs:
           echo "::warning::index.json のコミットに失敗しました。公開はこのまま続行します"
           exit 1
 
+      # JS の URL に付いた __BUILD__ を実行番号に置き換える（キャッシュの新旧混在を防ぐ）。
+      # 配信物にだけ効かせ、リポジトリのHTMLはプレースホルダのまま残す。
+      - name: Stamp build id into asset URLs
+        run: sed -i "s/__BUILD__/${{ github.run_id }}/g" public/*.html
+
       # 再生成後の public/ をそのまま配信する（ビルドはしない）
       - uses: actions/configure-pages@v5
 
