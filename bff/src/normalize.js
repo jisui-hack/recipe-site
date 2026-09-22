@@ -13,6 +13,7 @@ import {
   SCHEMA_VERSION,
   clampConfidence,
 } from "./schema.js";
+import { DEFAULT_SEASONING_AMOUNT, isSeasoning } from "./ingredients.js";
 
 const MAX = {
   title: 60,
@@ -215,7 +216,12 @@ export function normalizeDraft(raw, ctx) {
     const name = cut(item?.name, MAX.ingredientName);
     if (!name || seenNames.has(name)) continue;
     seenNames.add(name);
-    ingredients.push({ name, amount: cut(item?.amount, MAX.ingredientAmount) });
+    let amount = cut(item?.amount, MAX.ingredientAmount);
+    // N-11: 調味料に分量の指定が無ければ「適量」。
+    // 空欄のまま投稿フォームに残ると書き忘れに見える。数字のでっち上げではなく、
+    // 家庭料理での普通の答えなので、確信度を下げる理由にもしない
+    if (!amount && isSeasoning(name)) amount = DEFAULT_SEASONING_AMOUNT;
+    ingredients.push({ name, amount });
   }
 
   /* N-3 / N-4 / N-5 / N-10: 手順 */

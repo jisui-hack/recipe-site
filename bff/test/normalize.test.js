@@ -298,3 +298,66 @@ describe("X の投稿文（xPost）", () => {
     expect(weighted).toBeLessThanOrEqual(280);
   });
 });
+
+describe("N-11: 調味料の分量が空なら「適量」", () => {
+  /*
+   * 「醤油」だけで分量が空だと、投稿フォームで空欄のまま残り、書き忘れに見える。
+   * 家庭料理では「適量」が普通の答え。数字のでっち上げではないので、
+   * 確信度を下げる理由にもしない。
+   */
+  it("調味料は適量で埋める", () => {
+    const out = normalizeDraft(
+      rawDraft({
+        ingredients: [
+          { name: "豚バラ肉", amount: "200g" },
+          { name: "醤油", amount: "" },
+          { name: "ごま油", amount: "" },
+          { name: "塩こしょう", amount: "" },
+        ],
+      }),
+      ctx()
+    );
+    const by = Object.fromEntries(out.draft.ingredients.map((i) => [i.name, i.amount]));
+    expect(by["醤油"]).toBe("適量");
+    expect(by["ごま油"]).toBe("適量");
+    expect(by["塩こしょう"]).toBe("適量");
+  });
+
+  it("指定があればそのまま", () => {
+    const out = normalizeDraft(
+      rawDraft({ ingredients: [{ name: "醤油", amount: "大さじ2" }] }),
+      ctx()
+    );
+    expect(out.draft.ingredients[0].amount).toBe("大さじ2");
+  });
+
+  it("具材は埋めない（分からないものは空のまま）", () => {
+    const out = normalizeDraft(
+      rawDraft({ ingredients: [{ name: "豚バラ肉", amount: "" }, { name: "白菜", amount: "" }] }),
+      ctx()
+    );
+    expect(out.draft.ingredients.map((i) => i.amount)).toEqual(["", ""]);
+  });
+
+  it("水は調味料ではないので埋めない", () => {
+    const out = normalizeDraft(rawDraft({ ingredients: [{ name: "水", amount: "" }] }), ctx());
+    expect(out.draft.ingredients[0].amount).toBe("");
+  });
+
+  it("適量で埋めたぶんは、分量の確信度を下げる理由にしない", () => {
+    // 具材2つは分量あり、調味料3つは空 → 適量で埋まる。空欄が過半数にはならない
+    const out = normalizeDraft(
+      rawDraft({
+        ingredients: [
+          { name: "豚バラ肉", amount: "200g" },
+          { name: "白菜", amount: "1/4個" },
+          { name: "醤油", amount: "" },
+          { name: "みりん", amount: "" },
+          { name: "ごま油", amount: "" },
+        ],
+      }),
+      ctx()
+    );
+    expect(out.confidence.ingredientAmounts).not.toBe("low");
+  });
+});
