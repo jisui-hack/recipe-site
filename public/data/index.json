@@ -34,6 +34,21 @@
     ]
   },
   {
+    "id": "2026-0014-0klm",
+    "title": "大根と椎茸の煮物",
+    "thumb": "data/images/2026-0014-0klm.jpg",
+    "timeMinutes": 30,
+    "createdAt": "2026-09-22",
+    "protein": [],
+    "plant": [
+      "大根",
+      "きのこ"
+    ],
+    "genre": [
+      "和風"
+    ]
+  },
+  {
     "id": "2026-0011-ihrh",
     "title": "豚こまとトマトピーマンの中華炒め",
     "thumb": "data/images/2026-0011-ihrh.jpg",
