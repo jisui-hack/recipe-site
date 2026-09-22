@@ -79,6 +79,21 @@
     ]
   },
   {
+    "id": "2026-0017-zuby",
+    "title": "まいたけと豆腐の柚子胡椒鍋",
+    "thumb": "data/images/2026-0017-zuby.jpg",
+    "timeMinutes": 15,
+    "createdAt": "2026-09-22",
+    "protein": [],
+    "plant": [
+      "きのこ",
+      "豆腐・厚揚げ"
+    ],
+    "genre": [
+      "和風"
+    ]
+  },
+  {
     "id": "2026-0011-ihrh",
     "title": "豚こまとトマトピーマンの中華炒め",
     "thumb": "data/images/2026-0011-ihrh.jpg",
