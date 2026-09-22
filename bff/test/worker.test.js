@@ -516,8 +516,11 @@ describe("上流エラーの切り分け", () => {
     expect(upstreamLog().upstreamStatus).toBe(401);
     expect(upstreamLog().stopReason).toBe("not_retryable");
     expect(upstreamLog().attempts).toBe(1);
-    // クライアントには上流の事情を返さない
-    expect(await res.text()).not.toContain("401");
+    // クライアントには上流の事情を返さない。
+    // requestId はランダムで、たまたま "401" を含むことがあるので除いて見る
+    const { requestId, ...shown } = (await res.json()).error;
+    expect(requestId).toBeTruthy();
+    expect(JSON.stringify(shown)).not.toContain("401");
   });
 
   it("Anthropic 側のレート制限は upstream_rate_limit と分かる", async () => {

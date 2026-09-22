@@ -444,6 +444,62 @@ describe("レシピから描き起こす（写真が無いとき）", () => {
     expect(r).not.toContain("生のなすの場合");
   });
 
+  it("わさびは調味料。絡めるなら『姿は見えない』と伝える", async () => {
+    // 「わさびを加えて絡める」レシピで、炒め物の上に山盛りのわさびが描かれた。
+    // 具材として渡していたのが原因
+    const { buildRecipePrompt } = await import("../src/illustrate.js");
+    const r = buildRecipePrompt({
+      title: "豚ロースのわさび焼き",
+      ingredients: [{ name: "豚ロース" }, { name: "わさび", amount: "適量" }, { name: "醤油" }],
+      steps: ["豚肉を焼く。", "醤油とわさびを加えて全体に絡める。"],
+    });
+    expect(r).toContain("【皿に見える具材】\n豚ロース");
+    expect(r).not.toContain("【皿に見える具材】\n豚ロース\nわさび");
+    expect(r).toContain("- わさび: 混ぜ込む・絡める。全体になじみ、姿は見えない");
+    expect(r).toContain("山盛りにのせないでください");
+  });
+
+  it("仕上げにかけるなら『少量を散らす』と伝える", async () => {
+    const { buildRecipePrompt } = await import("../src/illustrate.js");
+    const r = buildRecipePrompt({
+      title: "山椒煮",
+      ingredients: [{ name: "豚肉" }, { name: "山椒" }],
+      steps: ["豚肉を煮る。", "仕上げに山椒をかけて完成。"],
+    });
+    expect(r).toContain("- 山椒: 仕上げにかける。ごく少量を散らす程度。山盛りにしない");
+  });
+
+  it("「回しかける」は仕上げではなく混ぜ込み", async () => {
+    const { buildRecipePrompt } = await import("../src/illustrate.js");
+    const r = buildRecipePrompt({
+      title: "炒め物",
+      ingredients: [{ name: "豚肉" }, { name: "マヨネーズ" }],
+      steps: ["マヨネーズを回しかけて炒める。"],
+    });
+    expect(r).toContain("- マヨネーズ: 混ぜ込む・絡める");
+  });
+
+  it("液体の調味料には注記を付けない（本題が埋もれる）", async () => {
+    const { buildRecipePrompt } = await import("../src/illustrate.js");
+    const r = buildRecipePrompt({
+      title: "炒め物",
+      ingredients: [{ name: "豚肉" }, { name: "醤油" }, { name: "ごま油" }, { name: "酒" }],
+      steps: ["醤油と酒を加えて炒める。"],
+    });
+    expect(r).toContain("【味つけ】\n醤油、ごま油、酒");
+    expect(r).not.toMatch(/^- /m);
+  });
+
+  it("手順に出てこない薬味も『混ぜ込み』として扱う（山盛りより安全）", async () => {
+    const { buildRecipePrompt } = await import("../src/illustrate.js");
+    const r = buildRecipePrompt({
+      title: "和え物",
+      ingredients: [{ name: "きゅうり" }, { name: "からし" }],
+      steps: ["きゅうりを切る。"],
+    });
+    expect(r).toContain("- からし: 混ぜ込む・絡める");
+  });
+
   it("切る話が無ければ切り方の欄を出さない", async () => {
     const { buildRecipePrompt } = await import("../src/illustrate.js");
     const r = buildRecipePrompt({
