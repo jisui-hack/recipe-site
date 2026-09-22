@@ -14,11 +14,27 @@
   --warn-weak: #f7edd8;
 }
 
+/* ---- font ----
+   本文は UD（ユニバーサルデザイン）系のゴシックで統一する。
+   - Windows に同梱の「UDデジタル教科書体」があればそれを最優先（Web配信はできないので local() のみ）
+   - それ以外の端末は Google Fonts の「BIZ UDPゴシック」（同じモリサワ製・無料）
+   - 届くまではシステムフォントで先に表示する（各HTMLの display=swap） */
+@font-face {
+  font-family: "UD Kyokasho";
+  font-weight: 400;
+  src: local("UD Digi Kyokasho NP-R"), local("UD Digi Kyokasho N-R");
+}
+@font-face {
+  font-family: "UD Kyokasho";
+  font-weight: 700;
+  src: local("UD Digi Kyokasho NP-B"), local("UD Digi Kyokasho N-B");
+}
+
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, "Hiragino Kaku Gothic ProN", sans-serif;
+  font-family: "UD Kyokasho", "BIZ UDPGothic", system-ui, -apple-system, "Hiragino Kaku Gothic ProN", sans-serif;
   background: var(--bg);
   color: var(--fg);
   line-height: 1.7;
