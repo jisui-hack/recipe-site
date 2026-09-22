@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-0012-p3xo",
+    "title": "ひき肉とズッキーニのドライカレー",
+    "thumb": "data/images/2026-0012-p3xo.jpg",
+    "timeMinutes": 15,
+    "createdAt": "2026-09-22",
+    "protein": [
+      "ひき肉"
+    ],
+    "plant": [
+      "玉ねぎ",
+      "ズッキーニ"
+    ],
+    "genre": [
+      "エスニック"
+    ]
+  },
+  {
     "id": "2026-0011-ihrh",
     "title": "豚こまとトマトピーマンの中華炒め",
     "thumb": "data/images/2026-0011-ihrh.jpg",
