@@ -31,22 +31,22 @@ export async function loadIndex() {
   return res.json();
 }
 
-/** タグのイラストを並べた行（カード用・小さめ） */
+/** タグの行（カード用）。イラストだけだと何か分からないので、小さくタグ名も添える */
 export function tagIconRow(recipe) {
   const tags = tagsOf(recipe);
   if (!tags.length) return null;
   return el(
     "span",
-    { class: "tag-icons", "aria-hidden": "true" },
-    tags.map(({ tag }) => el("span", { class: "tag-icon-wrap", html: tag.icon, title: tag.name }))
+    { class: "card-tags" },
+    tags.map(({ tag }) =>
+      el("span", { class: "card-tag" }, [
+        el("span", { class: "tag-icon-wrap", html: tag.icon, "aria-hidden": "true" }),
+        el("span", { text: tag.name }),
+      ])
+    )
   );
 }
 
-/** カードの読み上げ用に、タグ名をまとめたテキスト */
-function tagText(recipe) {
-  const names = tagsOf(recipe).map(({ tag }) => tag.name);
-  return names.length ? `タグ: ${names.join("、")}` : "";
-}
 
 /**
  * レシピカード1枚。
@@ -68,14 +68,12 @@ export function renderCard(r, matched = 0) {
   const meta = el("div", { class: "card-meta" }, [
     el("span", { text: `⏱ ${r.timeMinutes ?? "-"}分` }),
     matched > 0 ? el("span", { class: "badge", text: `${matched}つ一致` }) : null,
-    tagIconRow(r),
-    tagText(r) ? el("span", { class: "visually-hidden", text: tagText(r) }) : null,
   ]);
 
   return el("li", {}, [
     el("a", { class: "card", href: `recipe.html?id=${encodeURIComponent(r.id)}` }, [
       thumb,
-      el("div", { class: "card-body" }, [el("p", { class: "card-title", text: r.title }), meta]),
+      el("div", { class: "card-body" }, [el("p", { class: "card-title", text: r.title }), meta, tagIconRow(r)]),
     ]),
   ]);
 }

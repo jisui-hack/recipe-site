@@ -62,7 +62,9 @@ body {
   margin: 0 0 12px;
   letter-spacing: .04em;
 }
-.site-title a { color: var(--fg); text-decoration: none; }
+.site-title a { color: var(--fg); text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
+/* タイトル左の本棚マーク（favicon と同じ絵） */
+.site-mark { width: 26px; height: 26px; flex: 0 0 26px; }
 
 .site-nav { display: flex; gap: 10px; }
 .nav-btn {
@@ -127,12 +129,22 @@ h2 { font-size: 17px; margin: 24px 0 8px; }
   flex: 0 0 22px;
   vertical-align: middle;
 }
-.tag-icons {
-  display: inline-flex;
-  gap: 2px;
-  align-items: center;
+/* カードのタグ行：イラスト＋小さなタグ名。折り返して全部見せる */
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 10px;
+  margin-top: 3px;
 }
-.tag-icons .tag-icon-wrap { width: 18px; height: 18px; flex-basis: 18px; }
+.card-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.card-tag .tag-icon-wrap { width: 17px; height: 17px; flex-basis: 17px; }
 
 /* ---- tag picker (search.html / add.html) ---- */
 .tag-group { margin-bottom: 18px; }
