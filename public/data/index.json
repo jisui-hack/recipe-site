@@ -144,6 +144,22 @@
     ]
   },
   {
+    "id": "2026-0018-dub0",
+    "title": "油揚げときのこの味噌汁",
+    "thumb": "data/images/2026-0018-dub0.jpg",
+    "timeMinutes": 15,
+    "createdAt": "2026-09-22",
+    "protein": [],
+    "plant": [
+      "豆腐・厚揚げ",
+      "きのこ",
+      "ねぎ"
+    ],
+    "genre": [
+      "和風"
+    ]
+  },
+  {
     "id": "2026-0011-ihrh",
     "title": "豚こまとトマトピーマンの中華炒め",
     "thumb": "data/images/2026-0011-ihrh.jpg",
