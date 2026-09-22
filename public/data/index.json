@@ -295,6 +295,26 @@
     ]
   },
   {
+    "id": "2026-0023-m9c7",
+    "title": "豆腐のニラキムチのせ",
+    "thumb": "data/images/2026-0023-m9c7.jpg",
+    "timeMinutes": 10,
+    "createdAt": "2026-09-22",
+    "ing": [
+      "木綿豆腐",
+      "ニラ",
+      "キムチ",
+      "ごま油"
+    ],
+    "protein": [],
+    "plant": [
+      "豆腐・厚揚げ"
+    ],
+    "genre": [
+      "韓国風"
+    ]
+  },
+  {
     "id": "2026-0023-vs9n",
     "title": "ねぎと豆腐の味噌汁",
     "thumb": "data/images/2026-0023-vs9n.jpg",
