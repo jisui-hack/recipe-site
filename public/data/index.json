@@ -17,6 +17,23 @@
     ]
   },
   {
+    "id": "2026-0013-jd33",
+    "title": "万能ひき肉のミートソース",
+    "thumb": "data/images/2026-0013-jd33.jpg",
+    "timeMinutes": 10,
+    "createdAt": "2026-09-22",
+    "protein": [
+      "ひき肉"
+    ],
+    "plant": [
+      "玉ねぎ",
+      "トマト"
+    ],
+    "genre": [
+      "洋風"
+    ]
+  },
+  {
     "id": "2026-0011-ihrh",
     "title": "豚こまとトマトピーマンの中華炒め",
     "thumb": "data/images/2026-0011-ihrh.jpg",
