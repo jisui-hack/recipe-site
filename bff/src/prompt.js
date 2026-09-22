@@ -43,6 +43,8 @@ const BASE_PROMPT = `あなたは家庭料理のレシピ整理を手伝うア�
   推定の根拠すら無い場合は null にして followUps に入れる。
 - 人数がメモにない → null。フォームが 1 を補います。推定しない。
 - 分量がメモにない → amount は空文字。confidence.ingredientAmounts は low。
+  **ただし調味料（醤油・塩・油・みりんなど）は「適量」と書く。** 空欄にしない。
+  調味料の「適量」は数字のでっち上げではないので、確信度を下げる理由にしない。
 - ジャンルが判断できない → 空配列。無理に「和風」に寄せない。`;
 
 /**
@@ -192,7 +194,9 @@ export function buildTool(vocabulary, { xPost = true } = {}) {
               amount: {
                 type: "string",
                 maxLength: 20,
-                description: "分量。『150g』『1/2個』『大さじ2』。不明なら空文字。数値をでっち上げない。",
+                description:
+                  "分量。『150g』『1/2個』『大さじ2』。不明なら空文字。数値をでっち上げない。" +
+                  "ただし調味料で指定が無ければ「適量」。",
               },
             },
             required: ["name", "amount"],
