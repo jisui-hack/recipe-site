@@ -9,7 +9,7 @@
  * （部屋・窓の外・手・同席者・店の内装が消える）。切り抜き処理は別途不要。
  */
 
-import { isIgnored, isSeasoning } from "./ingredients.js";
+import { isIgnored, isPasteOrGrain, isSeasoning, seasoningUsage } from "./ingredients.js";
 
 /** 設計書 §4 の固定プロンプト。1文字も変えずに送る */
 /**
@@ -142,9 +142,24 @@ export function buildRecipePrompt({ title, ingredients, steps }) {
     blocks.push(`【切り方】\n${cuts.join("\n")}`);
   }
   if (seasoning.length) {
+    // 名前だけだと、わさびのような薬味を具材のように山盛りで描く。
+    // 手順から「絡める」か「仕上げにのせる」かを読んで、見え方を指定する
+    // 注記を付けるのは「姿を持ちうるもの」だけ。醤油や油は元から見えないので書かない
+    // （全部に付けると本題が埋もれる）
+    const notes = seasoning
+      .filter(isPasteOrGrain)
+      .map((name) => {
+        const usage = seasoningUsage(name, steps);
+        if (usage === "topping") return `- ${name}: 仕上げにかける。ごく少量を散らす程度。山盛りにしない`;
+        // 手順に出てこないものも「混ぜ込み」として扱う。山盛りよりはるかに安全
+        return `- ${name}: 混ぜ込む・絡める。全体になじみ、姿は見えない`;
+      });
+
     blocks.push(
       `【味つけ】\n${seasoning.join("、")}\n` +
-        "味つけは色と照りにだけ反映してください。粒・実・さやなどの姿では描かないでください。"
+        "味つけは色と照りにだけ反映してください。粒・実・さやなどの姿では描かないでください。\n" +
+        "**薬味やペーストを山盛りにのせないでください。**" +
+        (notes.length ? `\n${notes.join("\n")}` : "")
     );
   }
 
@@ -161,7 +176,7 @@ ${STYLE_SPEC}`;
 
 
 /** イラスト用のプロンプト版。上の文を変えたら必ず上げる */
-export const ILLUSTRATE_PROMPT_VERSION = "2026-09-06.1";
+export const ILLUSTRATE_PROMPT_VERSION = "2026-09-22.1";
 
 /**
  * 使うモデル。2026-08-20 に Gemini API のモデル一覧で確認済み。
