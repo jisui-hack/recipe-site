@@ -31,9 +31,10 @@ export async function loadIndex() {
   return res.json();
 }
 
-/** タグの行（カード用）。イラストだけだと何か分からないので、小さくタグ名も添える */
+/** タグの行（カード用）。イラストだけだと何か分からないので、小さくタグ名も添える。
+ *  ジャンル（和風・中華風…）は一覧では出さない。素材が分かれば十分で、行が長くなるだけなので。 */
 export function tagIconRow(recipe) {
-  const tags = tagsOf(recipe);
+  const tags = tagsOf(recipe).filter(({ groupKey }) => groupKey !== "genre");
   if (!tags.length) return null;
   return el(
     "span",
