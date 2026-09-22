@@ -491,6 +491,8 @@ function indexRow(recipe) {
     thumb: recipe.thumb,
     timeMinutes: recipe.timeMinutes,
     createdAt: recipe.createdAt,
+    // 材料名（一覧の検索用）。scripts/reindex.mjs の toIndexRow と揃える
+    ing: (recipe.ingredients ?? []).map((i) => (i.name ?? "").trim()).filter(Boolean),
   };
   for (const group of TAG_GROUPS) row[group.key] = recipe[group.key] ?? [];
   return row;

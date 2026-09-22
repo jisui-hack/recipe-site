@@ -80,11 +80,18 @@ export function renderCard(r, matched = 0) {
   ]);
 }
 
-/** タイトルの部分一致（NFKC・大文字小文字を無視） */
+/** タイトルと材料名の部分一致（NFKC・大文字小文字を無視）。
+ *  タグを付け忘れたレシピも、材料名（index.json の ing）から拾える。 */
 export function matchesQuery(recipe, query) {
   const q = query.normalize("NFKC").trim().toLowerCase();
   if (!q) return true;
-  return recipe.title.normalize("NFKC").toLowerCase().includes(q);
+  const hay = [recipe.title, ...(recipe.ing ?? [])].join(" ").normalize("NFKC").toLowerCase();
+  return hay.includes(q);
+}
+
+/** 所要時間が短い順（未設定は最後）、同じなら新着順 */
+export function byShortest(a, b) {
+  return (a.timeMinutes ?? 999) - (b.timeMinutes ?? 999) || byNewest(a, b);
 }
 
 /** レシピが持つ材料タグ（protein + plant）の名前一覧 */

@@ -129,6 +129,10 @@ function render() {
     .getElementById("card-list")
     .replaceChildren(...list.map(({ r, matched }) => renderCard(r, matched)));
 
+  // 貼り付くバーの件数。結果が画面外にあっても、ここで手応えが返る
+  document.getElementById("hit-count").textContent =
+    state.selected.size === 0 ? "" : `→ ${list.length}件`;
+
   saveState();
 }
 
@@ -154,6 +158,10 @@ function bindEvents() {
   document.getElementById("clear-all").addEventListener("click", () => {
     state.selected.clear();
     render();
+  });
+
+  document.getElementById("jump-results").addEventListener("click", () => {
+    document.getElementById("list-heading").scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
   for (const radio of document.querySelectorAll('input[name="mode"]')) {

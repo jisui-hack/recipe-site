@@ -17,6 +17,18 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="本棚">
 <meta name="mobile-web-app-capable" content="yes">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="description" content="材料から探せる、1食15分の自炊レシピ帳。">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="自炊の本棚">
+<meta property="og:title" content="材料から探す | 自炊の本棚">
+<meta property="og:description" content="材料から探せる、1食15分の自炊レシピ帳。">
+<meta property="og:url" content="https://jisui-hack.github.io/recipe-site/search.html">
+<meta property="og:image" content="https://jisui-hack.github.io/recipe-site/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@jisui_hack">
 <meta name="theme-color" content="#2c6e4f">
 </head>
 <body>
@@ -31,20 +43,25 @@
 </header>
 
 <main class="wrap">
-  <div id="selected-area" class="selected-area" hidden>
-    <span class="muted">選択：</span>
-    <span id="selected-chips"></span>
-    <button type="button" id="clear-all" class="link-btn">全解除</button>
-  </div>
-
-  <div id="groups"></div>
-
-  <div class="controls">
+  <!-- 何かを選んだ瞬間に手応えが返るよう、このバーは画面上部に貼り付く。
+       チップは31個で結果が画面外に落ちるため、件数と「結果を見る」をここに置く。 -->
+  <div id="selected-area" class="selected-area is-sticky" hidden>
+    <div class="selected-row">
+      <span class="muted">選択：</span>
+      <span id="selected-chips"></span>
+      <button type="button" id="clear-all" class="link-btn">全解除</button>
+    </div>
+    <div class="selected-row selected-result">
+      <span id="hit-count" class="hit-count" role="status" aria-live="polite"></span>
+      <button type="button" id="jump-results" class="btn btn-small">結果を見る ↓</button>
+    </div>
     <div class="modes" role="radiogroup" aria-label="絞り込み方">
       <label><input type="radio" name="mode" value="or" checked> いずれか使う</label>
       <label><input type="radio" name="mode" value="subset"> これだけで作れる</label>
     </div>
   </div>
+
+  <div id="groups"></div>
 
   <h2 id="list-heading">レシピ</h2>
   <p id="status" class="status">読み込み中…</p>

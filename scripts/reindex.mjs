@@ -19,6 +19,8 @@ function toIndexRow(recipe) {
     thumb: recipe.thumb ?? null,
     timeMinutes: recipe.timeMinutes ?? null,
     createdAt: recipe.createdAt ?? "",
+    // 材料名（一覧の検索用。分量は要らない）
+    ing: (recipe.ingredients ?? []).map((i) => (i.name ?? "").trim()).filter(Boolean),
   };
   // タグはグループごとにそのまま持たせる（一覧・材料から探すで使う）
   for (const group of TAG_GROUPS) row[group.key] = recipe[group.key] ?? [];

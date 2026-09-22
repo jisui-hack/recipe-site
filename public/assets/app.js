@@ -1,11 +1,13 @@
-/* レシピ一覧（タイトル検索のみ） */
+/* レシピ一覧：タイトル・材料名で検索、並び順の切り替え */
 
-import { byNewest, loadIndex, matchesQuery, renderCard } from "./common.js";
+import { byNewest, byShortest, loadIndex, matchesQuery, renderCard } from "./common.js";
 
-const state = { index: [], query: "" };
+const state = { index: [], query: "", sort: "new" };
 
 function render() {
-  const list = state.index.filter((r) => matchesQuery(r, state.query));
+  const list = state.index
+    .filter((r) => matchesQuery(r, state.query))
+    .sort(state.sort === "time" ? byShortest : byNewest);
 
   document.getElementById("list-heading").textContent = state.query
     ? `検索結果（${list.length}件）`
@@ -33,6 +35,12 @@ async function main() {
       state.query = e.target.value;
       render();
     });
+    for (const radio of document.querySelectorAll('input[name="sort"]')) {
+      radio.addEventListener("change", () => {
+        state.sort = radio.value;
+        render();
+      });
+    }
     render();
     renderNoteFeed();
   } catch (err) {

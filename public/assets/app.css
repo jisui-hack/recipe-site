@@ -666,3 +666,88 @@ ol.steps li { margin-bottom: 8px; }
   background: var(--accent-weak);
   border-left-color: var(--accent);
 }
+
+/* ---------- 台所で使うための手当て ---------- */
+
+/* 押した手応え。何も変わらないと「押せたのか分からない」ので、一瞬だけ沈める */
+.chip:active,
+.card:active,
+.btn:active,
+.nav-btn:active,
+.link-btn:active,
+.chip-remove:active,
+.check:active {
+  transform: scale(.98);
+  filter: brightness(.96);
+}
+.chip, .card, .btn, .nav-btn, .check { transition: transform .06s ease, filter .06s ease; }
+
+/* 材料から探す：選択バーは画面上部に貼り付く。件数と「結果を見る」をここに出す */
+.selected-area.is-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  margin-top: -4px;
+  box-shadow: 0 6px 12px -8px rgba(31, 28, 23, .35);
+}
+.selected-row { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 6px; }
+.selected-result { margin-top: 6px; justify-content: space-between; }
+.hit-count { font-weight: 700; color: var(--accent); font-size: 15px; }
+.selected-area .modes { margin-top: 6px; gap: 14px; font-size: 14px; }
+.btn-small { padding: 6px 12px; font-size: 14px; border-radius: 8px; }
+/* 「結果を見る」で飛んだとき、貼り付いたバーの下に見出しが隠れないようにする */
+#list-heading { scroll-margin-top: 140px; }
+
+/* 詳細：見出しと補助（ヒント／ボタン）を横並びに */
+.section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.section-head h2 { margin-bottom: 6px; }
+.section-head .hint { font-size: 12px; }
+
+/* 手順：腕を伸ばした距離で読める大きさ。番号は緑の丸バッジ */
+ol.steps { list-style: none; padding: 0; margin: 4px 0 0; counter-reset: step; }
+ol.steps li {
+  position: relative;
+  counter-increment: step;
+  padding: 8px 4px 8px 42px;
+  margin: 0 0 4px;
+  font-size: 18px;
+  line-height: 1.75;
+  border-radius: 8px;
+}
+ol.steps li::before {
+  content: counter(step);
+  position: absolute;
+  left: 2px;
+  top: 11px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--surface);
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+table.ingredients th, table.ingredients td { font-size: 17px; padding: 10px 4px; }
+
+/* 済：薄くして線を引く。押せることが分かるよう cursor も変える */
+.check { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.check:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.check.is-done { opacity: .45; }
+.check.is-done th, .check.is-done td, li.check.is-done { text-decoration: line-through; }
+ol.steps li.is-done::before { background: var(--muted); }
+
+/* 画面をつけたままにする */
+.wake-btn {
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--fg);
+  cursor: pointer;
+}
+.wake-btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }

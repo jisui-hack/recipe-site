@@ -28,6 +28,58 @@ function tagSection(recipe) {
   return rows.length ? el("div", { class: "tag-rows" }, rows) : null;
 }
 
+/** 材料・手順の「済」トグル。タップ／Enter／Space で切り替える */
+function bindCheckToggles(root) {
+  const toggle = (node) => {
+    const on = node.getAttribute("aria-pressed") !== "true";
+    node.setAttribute("aria-pressed", on ? "true" : "false");
+    node.classList.toggle("is-done", on);
+  };
+  root.addEventListener("click", (e) => {
+    const node = e.target.closest(".check");
+    if (node && root.contains(node)) toggle(node);
+  });
+  root.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const node = e.target.closest(".check");
+    if (!node) return;
+    e.preventDefault();
+    toggle(node);
+  });
+}
+
+/**
+ * 調理中に画面がロックされないようにするボタン。
+ * Wake Lock API に対応した端末（iOS 16.4+ / Android Chrome）でだけ出す。
+ * 別タブに移るとOSが解放するので、戻ってきたら取り直す。
+ */
+let wakeLock = null;
+function wakeLockButton() {
+  if (!("wakeLock" in navigator)) return null;
+  const btn = el("button", { type: "button", class: "wake-btn", "aria-pressed": "false", text: "画面をつけたままにする" });
+  const setLabel = (on) => {
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
+    btn.textContent = on ? "画面をつけたまま：オン" : "画面をつけたままにする";
+  };
+  const acquire = async () => {
+    try {
+      wakeLock = await navigator.wakeLock.request("screen");
+      wakeLock.addEventListener("release", () => { wakeLock = null; setLabel(false); });
+      setLabel(true);
+    } catch {
+      setLabel(false);
+    }
+  };
+  btn.addEventListener("click", async () => {
+    if (wakeLock) { await wakeLock.release(); wakeLock = null; setLabel(false); return; }
+    await acquire();
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && btn.getAttribute("aria-pressed") === "true" && !wakeLock) acquire();
+  });
+  return btn;
+}
+
 export function renderRecipe(r, root) {
   const nodes = [];
 
@@ -40,23 +92,41 @@ export function renderRecipe(r, root) {
     el("div", { class: "detail-meta" }, [
       el("span", { text: `⏱ ${r.timeMinutes ?? "-"}分` }),
       el("span", { text: `${r.servings ?? 1}人前` }),
-      r.createdAt ? el("span", { text: `追加 ${r.createdAt}` }) : null,
     ])
   );
 
   nodes.push(tagSection(r));
 
-  nodes.push(el("h2", { text: "材料" }));
+  // 材料・手順はタップで「済」にできる（このページ内だけ。保存はしない）
+  nodes.push(
+    el("div", { class: "section-head" }, [
+      el("h2", { text: "材料" }),
+      el("span", { class: "muted hint", text: "タップで済にできます" }),
+    ])
+  );
   const rows = (r.ingredients ?? []).map((ing) =>
-    el("tr", {}, [
+    el("tr", { class: "check", role: "button", tabindex: "0", "aria-pressed": "false" }, [
       el("th", { scope: "row", text: ing.name }),
       el("td", { class: "amount", text: ing.amount ?? "" }),
     ])
   );
   nodes.push(el("table", { class: "ingredients" }, [el("tbody", {}, rows)]));
 
-  nodes.push(el("h2", { text: "手順" }));
-  nodes.push(el("ol", { class: "steps" }, (r.steps ?? []).map((s) => el("li", { text: s }))));
+  nodes.push(
+    el("div", { class: "section-head" }, [
+      el("h2", { text: "手順" }),
+      wakeLockButton(),
+    ])
+  );
+  nodes.push(
+    el(
+      "ol",
+      { class: "steps" },
+      (r.steps ?? []).map((s) =>
+        el("li", { class: "check", role: "button", tabindex: "0", "aria-pressed": "false", text: s })
+      )
+    )
+  );
 
   if (r.notes) {
     nodes.push(el("h2", { text: "メモ" }));
@@ -78,6 +148,10 @@ export function renderRecipe(r, root) {
 
   root.replaceChildren(...nodes.filter(Boolean));
   root.hidden = false;
+  if (!root.dataset.checkBound) {
+    bindCheckToggles(root);
+    root.dataset.checkBound = "1";
+  }
 }
 
 async function main() {
