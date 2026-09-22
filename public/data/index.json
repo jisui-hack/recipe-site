@@ -103,6 +103,13 @@
     "thumb": "data/images/2026-0016-bib0.jpg",
     "timeMinutes": 15,
     "createdAt": "2026-09-22",
+    "ing": [
+      "鶏もも肉",
+      "塩",
+      "ポン酢",
+      "七味唐辛子",
+      "ねぎまたは青葉"
+    ],
     "protein": [
       "鶏肉"
     ],
@@ -119,6 +126,14 @@
     "thumb": "data/images/2026-0017-zuby.jpg",
     "timeMinutes": 15,
     "createdAt": "2026-09-22",
+    "ing": [
+      "水",
+      "出汁昆布",
+      "まいたけ",
+      "木綿豆腐",
+      "白だし",
+      "柚子胡椒"
+    ],
     "protein": [],
     "plant": [
       "きのこ",
